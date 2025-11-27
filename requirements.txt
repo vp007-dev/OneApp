@@ -1,14 +1,14 @@
 fastapi
 uvicorn[standard]
+gunicorn
 sqlmodel
 sqlalchemy<2.0
 jinja2
 python-multipart
 requests
 pytesseract
-pdf2image
 Pillow
-python-dotenv
-apscheduler
 openpyxl
+apscheduler
 python-dateutil
+python-dotenv
