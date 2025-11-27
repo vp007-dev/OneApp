@@ -12,3 +12,4 @@ openpyxl
 apscheduler
 python-dateutil
 python-dotenv
+itsdangerous
