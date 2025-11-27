@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% set back = "/ocr-upload" %}
+{% block content %}
+
+<h2 class="text-xl font-semibold mb-4">Confirm Extracted Details</h2>
+
+<div class="bg-[#0d1117] border border-white/10 rounded-2xl p-4 space-y-4">
+  <p class="text-gray-400 text-sm">AI has extracted details. Review and correct if needed before saving.</p>
+
+  <form method="post" action="/records/add_from_ocr" class="space-y-4">
+    {% for field, label in {
+        'register_number': 'Register Number',
+        'vehicle_model': 'Vehicle Model',
+        'owner_name': 'Owner Name',
+        'address': 'Address',
+        'policy_number': 'Policy Number',
+        'validity_date': 'Validity Date',
+        'insurance_company': 'Insurance Company'
+    }.items() %}
+      <div class="space-y-1">
+        <label class="text-sm text-gray-300">{{ label }}</label>
+        <input type="text" name="{{ field }}" value="{{ fields[field] }}" class="w-full bg-[#0f1420] border border-white/10 p-3 rounded-xl text-gray-200" required>
+      </div>
+    {% endfor %}
+
+    <button class="w-full py-3 bg-emerald-500 rounded-xl text-white font-semibold">Save to Database</button>
+  </form>
+</div>
+
+{% endblock %}

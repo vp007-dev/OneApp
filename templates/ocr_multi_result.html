@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% set back = "/ocr-upload" %}
+{% block content %}
+
+<h2 class="text-xl font-semibold mb-4">Preview: Import Multiple Records</h2>
+
+<p class="text-sm text-gray-400 mb-3">
+  Review the rows parsed from Excel. You can edit any field, run heuristic auto-fill, run AI suggestions for insurance company,
+  save individual rows, or save all at once.
+</p>
+
+<form id="bulkForm" method="post" action="/records/add_rows_bulk">
+  <div id="rowsContainer" class="space-y-3">
+    {% for row in entries %}
+    {% set i = loop.index0 %}
+    <div class="p-3 rounded-2xl bg-[#0f1420] border border-white/5">
+      <div class="flex items-center justify-between mb-2">
+        <div class="text-sm text-gray-300 font-medium">Row {{ loop.index }}</div>
+        <div class="flex gap-2">
+          <button type="button" class="text-xs px-2 py-1 rounded border" onclick="saveOne({{ i }})">Save</button>
+          <button type="button" class="text-xs px-2 py-1 rounded border" onclick="fillHeuristic({{ i }})">Heuristic</button>
+          <button type="button" class="text-xs px-2 py-1 rounded border" onclick="aiFill({{ i }})">AI Fill</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-2">
+        <input type="text" name="register_number_{{ i }}" id="register_number_{{ i }}" value="{{ row.register_number }}" placeholder="Register number" class="w-full p-2 rounded bg-[#0b0f14] border border-white/5 text-sm">
+        <input type="text" name="vehicle_model_{{ i }}" id="vehicle_model_{{ i }}" value="{{ row.vehicle_model }}" placeholder="Vehicle model" class="w-full p-2 rounded bg-[#0b0f14] border border-white/5 text-sm">
+        <input type="text" name="owner_name_{{ i }}" id="owner_name_{{ i }}" value="{{ row.owner_name }}" placeholder="Owner name" class="w-full p-2 rounded bg-[#0b0f14] border border-white/5 text-sm">
+        <input type="text" name="policy_number_{{ i }}" id="policy_number_{{ i }}" value="{{ row.policy_number }}" placeholder="Policy number" class="w-full p-2 rounded bg-[#0b0f14] border border-white/5 text-sm">
+        <input type="date" name="validity_date_{{ i }}" id="validity_date_{{ i }}" value="{{ row.validity_date }}" placeholder="Validity date" class="w-full p-2 rounded bg-[#0b0f14] border border-white/5 text-sm">
+        <input type="text" name="insurance_company_{{ i }}" id="insurance_company_{{ i }}" value="{{ row.insurance_company }}" placeholder="Insurance company" class="w-full p-2 rounded bg-[#0b0f14] border border-white/5 text-sm">
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <input type="hidden" id="rows_json" name="rows_json" value="">
+  <div class="mt-4 flex gap-2">
+    <button type="button" onclick="saveAll()" class="flex-1 py-3 bg-emerald-500 rounded-xl text-white">Save All</button>
+    <button type="button" onclick="aiFillAll()" class="flex-1 py-3 border rounded-xl text-sm">AI Fill All</button>
+  </div>
+</form>
+
+<script>
+async function collectRows() {
+  const container = document.getElementById('rowsContainer');
+  const rows = [];
+  const items = container.children;
+  for (let i = 0; i < items.length; i++) {
+    rows.push({
+      register_number: document.getElementById(`register_number_${i}`).value || "",
+      vehicle_model: document.getElementById(`vehicle_model_${i}`).value || "",
+      owner_name: document.getElementById(`owner_name_${i}`).value || "",
+      policy_number: document.getElementById(`policy_number_${i}`).value || "",
+      validity_date: document.getElementById(`validity_date_${i}`).value || "",
+      insurance_company: document.getElementById(`insurance_company_${i}`).value || ""
+    });
+  }
+  return rows;
+}
+
+async function saveAll() {
+  const rows = await collectRows();
+  document.getElementById('rows_json').value = JSON.stringify(rows);
+  document.getElementById('bulkForm').submit();
+}
+
+async function saveOne(index) {
+  const rows = await collectRows();
+  const r = rows[index];
+  const fd = new FormData();
+  fd.append('register_number', r.register_number);
+  fd.append('vehicle_model', r.vehicle_model);
+  fd.append('owner_name', r.owner_name);
+  fd.append('address', r.address || "");
+  fd.append('policy_number', r.policy_number);
+  fd.append('validity_date', r.validity_date);
+  fd.append('insurance_company', r.insurance_company || "");
+  const res = await fetch('/records/add_row', { method: 'POST', body: fd });
+  if (res.redirected) {
+    window.location = res.url;
+  } else {
+    location.reload();
+  }
+}
+
+function fillHeuristic(index) {
+  const p = document.getElementById(`policy_number_${index}`).value.toUpperCase();
+  let guess = "";
+  if (p.startsWith("POL")) guess = "General Insurance Co.";
+  else if (p.startsWith("IC")) guess = "ICICI Lombard";
+  else if (p.includes("BAJAJ") || p.startsWith("BAJ")) guess = "Bajaj Allianz";
+  else if (p.includes("HDFC")) guess = "HDFC Ergo";
+  else if (p.includes("RAJ")) guess = "Reliance General";
+  document.getElementById(`insurance_company_${index}`).value = guess;
+}
+
+async function aiFill(index) {
+  const rows = await collectRows();
+  const r = rows[index];
+  const resp = await fetch('/excel-ai-fill', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ rows: [r] })
+  });
+  const data = await resp.json();
+  if (data.rows && data.rows[0]) {
+    document.getElementById(`insurance_company_${index}`).value = data.rows[0].ai_insurance || "";
+  }
+}
+
+async function aiFillAll() {
+  const rows = await collectRows();
+  const resp = await fetch('/excel-ai-fill', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ rows })
+  });
+  const data = await resp.json();
+  if (data.rows) {
+    for (let i = 0; i < data.rows.length; i++) {
+      document.getElementById(`insurance_company_${i}`).value = data.rows[i].ai_insurance || "";
+    }
+  }
+}
+</script>
+
+{% endblock %}

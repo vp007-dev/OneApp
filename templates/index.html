@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="mb-4">
+  <div class="rounded-card card-soft p-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-semibold">Overview</h2>
+        <p class="text-sm muted mt-1">Today is {{ today }} · <span class="text-emerald-400">{{ records|length }}</span> records</p>
+      </div>
+      <div class="text-right">
+        <a href="/ocr-upload" class="text-sm px-3 py-2 bg-indigo-600 rounded-lg">Scan Policy</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GRID: responsive -->
+<div class="grid gap-4 grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+  {% for item in records %}
+    {% set r = item.record %}
+    {% set status = item.status %}
+    {% set days = item.days_left %}
+
+    <!-- Card: use flex-col so badge stays fixed and actions are at bottom -->
+    <article class="rounded-card card-soft p-4 relative overflow-hidden flex flex-col justify-between">
+      <!-- Status Badge (stable top-right) -->
+      <div class="absolute top-3 right-3 z-10">
+        {% if status == "Expired" %}
+          <span class="status-chip text-red-300 bg-red-800/10 border-red-500/20">Expired · {{ days|abs }}d</span>
+        {% elif status == "Urgent" %}
+          <span class="status-chip text-orange-100 bg-orange-800/10 border-orange-400/20">Urgent · {{ days }}d</span>
+        {% elif status == "Soon" %}
+          <span class="status-chip text-yellow-100 bg-yellow-800/10 border-yellow-400/20">Soon · {{ days }}d</span>
+        {% else %}
+          <span class="status-chip text-emerald-100 bg-emerald-800/10 border-emerald-400/20">OK · {{ days }}d</span>
+        {% endif %}
+      </div>
+
+      <!-- Top content -->
+      <div class="flex gap-4">
+        <!-- initials badge -->
+        <div class="flex items-start">
+          <div class="initials mt-1">{{ r.vehicle_model[:1] | upper }}</div>
+        </div>
+
+        <div class="flex-1 min-w-0">
+          <a href="/records/{{ r.id }}" class="text-md font-semibold block truncate">{{ r.vehicle_model }}</a>
+          <p class="text-xs muted mt-1 truncate">{{ r.register_number }}</p>
+
+          <p class="text-sm text-slate-200 mt-3 truncate">{{ r.insurance_company or '' }}</p>
+
+          <div class="mt-3 text-sm space-y-1">
+            <div class="flex items-center gap-2 muted text-xs">
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 12h14M12 5v14"/></svg>
+              <span class="text-gray-200 truncate">{{ r.owner_name }}</span>
+            </div>
+
+            <div class="flex items-center gap-2 muted text-xs">
+              <svg class="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 2v2M18 2v2M3 10h18M5 22h14"/></svg>
+              <span class="text-gray-200">Valid till: {{ r.validity_date }}</span>
+            </div>
+
+            <div class="text-xs">
+              <a href="/records/{{ r.id }}" class="text-emerald-300 text-xs truncate">Policy: {{ r.policy_number }}</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer actions (moved to bottom so they do not affect badge alignment) -->
+      <div class="mt-4 flex items-center justify-between">
+        <div class="text-xs muted">ID: {{ r.id }}</div>
+        <div class="flex gap-2 items-center">
+          <a href="/records/{{ r.id }}/edit" class="px-3 py-1 rounded-md text-xs border border-white/6">Edit</a>
+          <form method="post" action="/records/{{ r.id }}/delete" onsubmit="return confirm('Delete this record?');">
+            <button type="submit" class="px-3 py-1 rounded-md text-xs border border-red-600 text-red-300">Delete</button>
+          </form>
+        </div>
+      </div>
+    </article>
+  {% endfor %}
+</div>
+
+{% endblock %}

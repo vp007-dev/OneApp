@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% set back = "/" %}
+{% block content %}
+
+<h2 class="text-xl font-semibold mb-4">Scan Policy Document</h2>
+
+<div class="bg-[#0d1117] border border-white/10 rounded-2xl p-4 space-y-4">
+  <p class="text-gray-400 text-sm">
+    Upload an image, PDF, or Excel file. The app will try to extract policy details using OCR + AI.
+  </p>
+
+  <form id="ocrForm" method="post" enctype="multipart/form-data" action="/ocr-upload" class="space-y-4">
+    <input type="file" name="file" required accept="image/*,.pdf,.xlsx" class="w-full text-sm bg-[#0f1420] border border-white/10 p-3 rounded-xl text-gray-300">
+    <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-white font-semibold">Scan Document</button>
+  </form>
+
+  <div id="loading" class="hidden text-center text-gray-300 text-sm">Extracting text using AI... Please wait.</div>
+</div>
+
+<script>
+  document.getElementById("ocrForm").addEventListener("submit", function() {
+    document.getElementById("loading").classList.remove("hidden");
+  });
+</script>
+
+{% endblock %}

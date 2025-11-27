@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="text-xl font-semibold mb-4">Add Insurance Record</h2>
+
+<form method="post" class="space-y-4" action="/records/new">
+
+  <div class="space-y-1">
+    <label class="text-sm text-gray-300">Register Number</label>
+    <input name="register_number" required placeholder="UP 80 XX 1234"
+      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
+  </div>
+
+  <div class="space-y-1">
+    <label class="text-sm text-gray-300">Vehicle Model</label>
+    <input name="vehicle_model" required placeholder="Mahindra 575 DI"
+      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
+  </div>
+
+  <div class="space-y-1">
+    <label class="text-sm text-gray-300">Owner Name</label>
+    <input name="owner_name" required
+      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
+  </div>
+
+  <div class="space-y-1">
+    <label class="text-sm text-gray-300">Address</label>
+    <textarea name="address" rows="2" required
+      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm"></textarea>
+  </div>
+
+  <div class="space-y-1">
+    <label class="text-sm text-gray-300">Policy Number</label>
+    <input name="policy_number" required
+      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
+  </div>
+
+  <div class="space-y-1">
+    <label class="text-sm text-gray-300">Validity Date</label>
+    <input type="date" name="validity_date" required
+      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
+  </div>
+
+  <div class="space-y-1">
+    <label class="text-sm text-gray-300">Insurance Company</label>
+    <input name="insurance_company" required
+      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
+  </div>
+
+  <button type="submit" class="w-full py-3 bg-emerald-500 rounded-xl text-white font-semibold">Save</button>
+</form>
+
+{% endblock %}

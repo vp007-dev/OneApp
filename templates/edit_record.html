@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% set back = "/" %}
+{% block content %}
+
+<h2 class="text-xl font-semibold mb-4">Edit Record</h2>
+
+<form method="post" action="/records/{{ record.id }}/edit" class="space-y-4">
+
+  <div class="space-y-1">
+    <label class="text-sm text-gray-300">Register Number</label>
+    <input name="register_number" required value="{{ record.register_number }}"
+      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
+  </div>
+
+  <div class="space-y-1">
+    <label class="text-sm text-gray-300">Vehicle Model</label>
+    <input name="vehicle_model" required value="{{ record.vehicle_model }}"
+      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
+  </div>
+
+  <div class="space-y-1">
+    <label class="text-sm text-gray-300">Owner Name</label>
+    <input name="owner_name" required value="{{ record.owner_name }}"
+      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
+  </div>
+
+  <div class="space-y-1">
+    <label class="text-sm text-gray-300">Address</label>
+    <textarea name="address" rows="2" required class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm">{{ record.address }}</textarea>
+  </div>
+
+  <div class="space-y-1">
+    <label class="text-sm text-gray-300">Policy Number</label>
+    <input name="policy_number" required value="{{ record.policy_number }}"
+      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
+  </div>
+
+  <div class="space-y-1">
+    <label class="text-sm text-gray-300">Validity Date</label>
+    <input type="date" name="validity_date" required value="{{ record.validity_date }}"
+      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
+  </div>
+
+  <div class="space-y-1">
+    <label class="text-sm text-gray-300">Insurance Company</label>
+    <input name="insurance_company" required value="{{ record.insurance_company }}"
+      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
+  </div>
+
+  <div class="flex gap-3">
+    <button type="submit" class="flex-1 py-3 bg-emerald-500 rounded-xl text-white font-semibold">Save</button>
+    <a href="/" class="flex-1 py-3 border rounded-xl text-sm text-gray-200 text-center">Cancel</a>
+  </div>
+</form>
+
+{% endblock %}

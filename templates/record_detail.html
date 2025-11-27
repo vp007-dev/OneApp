@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% set back = "/" %}
+{% block content %}
+
+<h2 class="text-lg font-semibold mb-4 flex items-center justify-between">
+  Record Details
+  <div class="flex gap-2 items-center">
+    <a href="/records/{{ record.id }}/edit" class="px-3 py-1 rounded-lg border border-white/10 text-sm hover:bg-white/2">Edit</a>
+
+    <form method="post" action="/records/{{ record.id }}/delete" onsubmit="return confirm('Delete this record?');">
+      <button type="submit" class="px-3 py-1 rounded-lg border border-red-400 text-sm text-red-300 hover:bg-red-500/10">Delete</button>
+    </form>
+  </div>
+</h2>
+
+<div class="space-y-3 rounded-2xl bg-slate-900 border border-slate-800 p-4">
+  <div>
+    <p class="text-sm text-slate-400">Register Number</p>
+    <p class="text-base font-semibold">{{ record.register_number }}</p>
+  </div>
+
+  <div>
+    <p class="text-sm text-slate-400">Vehicle Model</p>
+    <p class="text-base font-semibold">{{ record.vehicle_model }}</p>
+  </div>
+
+  <div>
+    <p class="text-sm text-slate-400">Owner Name</p>
+    <p class="text-base font-semibold">{{ record.owner_name }}</p>
+  </div>
+
+  <div>
+    <p class="text-sm text-slate-400">Address</p>
+    <p class="text-base font-semibold whitespace-pre-line">{{ record.address }}</p>
+  </div>
+
+  <div>
+    <p class="text-sm text-slate-400">Policy Number</p>
+    <p class="text-base font-semibold">{{ record.policy_number }}</p>
+  </div>
+
+  <div>
+    <p class="text-sm text-slate-400">Validity Date</p>
+    <p class="text-base font-semibold">{{ record.validity_date }}</p>
+  </div>
+
+  <div>
+    <p class="text-sm text-slate-400">Insurance Company</p>
+    <p class="text-base font-semibold">{{ record.insurance_company }}</p>
+  </div>
+</div>
+
+{% endblock %}
