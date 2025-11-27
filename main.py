@@ -35,7 +35,7 @@ from pathlib import Path
 
 import pytesseract
 from PIL import Image
-import pdf2image
+# import pdf2image
 import openpyxl
 from openpyxl.utils.datetime import from_excel as openpyxl_from_excel
 from starlette.middleware.sessions import SessionMiddleware
@@ -99,15 +99,13 @@ def check_expiring_policies():
 # ---------- OCR helpers ----------
 def extract_text_from_bytes(raw_bytes: bytes, filename: str) -> str:
     filename = filename.lower()
+
+    # Images: png, jpg, jpeg, webp
     if filename.endswith((".png", ".jpg", ".jpeg", ".webp")):
         img = Image.open(io.BytesIO(raw_bytes)).convert("RGB")
         return pytesseract.image_to_string(img)
-    if filename.endswith(".pdf"):
-        text = ""
-        pages = pdf2image.convert_from_bytes(raw_bytes)
-        for page in pages:
-            text += pytesseract.image_to_string(page) + "\n"
-        return text
+
+    # Excel: xlsx, xlsm
     if filename.endswith((".xlsx", ".xlsm")):
         wb = openpyxl.load_workbook(io.BytesIO(raw_bytes), data_only=True)
         text = ""
@@ -116,6 +114,8 @@ def extract_text_from_bytes(raw_bytes: bytes, filename: str) -> str:
             for row in ws.iter_rows(values_only=True):
                 text += " | ".join([str(c) for c in row if c is not None]) + "\n"
         return text
+
+    # Fallback: try plain text
     try:
         return raw_bytes.decode("utf-8", errors="ignore")
     except Exception:
