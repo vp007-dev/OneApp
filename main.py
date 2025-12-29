@@ -43,8 +43,9 @@ from starlette.middleware.sessions import SessionMiddleware
 from models import VehicleRecord
 
 # ---------- Config ----------
-DATABASE_URL = "sqlite:///./tractor_records.db"
+DATABASE_URL = os.getenv("DATABASE_URL")
 engine = create_engine(DATABASE_URL, echo=False)
+
 
 # Read OpenRouter key from environment (safer)
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
