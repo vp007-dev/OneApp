@@ -420,12 +420,16 @@ def logout(request: Request):
 # ---------- Startup / Shutdown ----------
 @app.on_event("startup")
 def on_startup():
-    create_db_and_tables()
+    # Only allow ONE worker to perform migrations
+    if os.environ.get("RUN_MAIN") == "true" or os.environ.get("RENDER") == "true":
+        create_db_and_tables()
+
     try:
         scheduler.add_job(check_expiring_policies, "cron", hour=9, minute=0)
         scheduler.start()
-    except Exception as e:
-        print("Scheduler start failed:", e)
+    except Exception:
+        pass
+
 
 
 @app.on_event("shutdown")
