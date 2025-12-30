@@ -10,3 +10,11 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", () => {
     // For now we don't cache anything, just pass-through
 });
+
+self.addEventListener("push", function(event) {
+  const data = event.data.json();
+  self.registration.showNotification(data.notification.title, {
+    body: data.notification.body,
+    icon: "/static/pwa/icon-192.png"
+  });
+});

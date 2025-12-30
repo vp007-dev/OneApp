@@ -7,7 +7,8 @@ import time
 import requests
 from datetime import date
 import datetime
-
+import firebase_admin
+from firebase_admin import credentials, messaging
 from typing import Dict, Any
 
 from fastapi import (
@@ -59,6 +60,19 @@ SESSION_TIMEOUT_SECONDS = 5 * 60  # e.g. 5 minutes
 # ---------- App & Templates ----------
 app = FastAPI(title="Tractor Insurance Records")
 
+firebase_key = os.getenv("FIREBASE_PRIVATE_KEY").replace("\\n", "\n")
+
+cred = credentials.Certificate({
+    "type": "service_account",
+    "project_id": "tractorcare-8586f",
+    "private_key": firebase_key,
+    "client_email": os.getenv("FIREBASE_CLIENT_EMAIL"),
+    "token_uri": "https://oauth2.googleapis.com/token",
+})
+
+firebase_admin.initialize_app(cred)
+
+
 # Sessions for login
 app.add_middleware(
     SessionMiddleware,
@@ -86,15 +100,15 @@ def get_session():
 def check_expiring_policies():
     today = date.today()
     with Session(engine) as session:
-        records = session.exec(select(VehicleRecord)).all()
-        for r in records:
-            days_left = (r.validity_date - today).days
-            if days_left in (30, 7, 1, 0) or days_left < 0:
-                print(
-                    f"[REMINDER] {r.vehicle_model} ({r.register_number}) "
-                    f"policy {r.policy_number} expires in {days_left} days "
-                    f"(valid till {r.validity_date})"
+        for r in session.exec(select(VehicleRecord)).all():
+            days = (r.validity_date - today).days
+            if days == 5 and r.device_token:
+                send_push(
+                    r.device_token,
+                    "🚨 Policy Expiring",
+                    f"{r.vehicle_model} expires in 5 days!"
                 )
+
 
 
 # ---------- OCR helpers ----------
@@ -382,6 +396,17 @@ def require_login(request: Request):
     sess["last_seen"] = now
     return True
 
+def send_push(token, title, body):
+    msg = messaging.Message(
+        token=token,
+        notification=messaging.Notification(
+            title=title,
+            body=body,
+        )
+    )
+    messaging.send(msg)
+
+
 
 # ---------- Login / Logout ----------
 @app.get("/login", response_class=HTMLResponse)
@@ -425,8 +450,10 @@ def on_startup():
         create_db_and_tables()
 
     try:
-        scheduler.add_job(check_expiring_policies, "cron", hour=9, minute=0)
+        scheduler.add_job(check_expiring_policies, "interval", hours=1)
         scheduler.start()
+        print("Reminder scheduler started")
+
     except Exception:
         pass
 
@@ -474,6 +501,14 @@ def new_record_form(
 ):
     return templates.TemplateResponse("new_record.html", {"request": request})
 
+@app.post("/register-device")
+def register_device(token: str = Form(...), session: Session = Depends(get_session)):
+    last = session.exec(select(VehicleRecord).order_by(VehicleRecord.id.desc())).first()
+    if last:
+        last.device_token = token
+        session.add(last)
+        session.commit()
+    return {"ok": True}
 
 @app.post("/records/new")
 def create_record(
@@ -486,6 +521,8 @@ def create_record(
     insurance_company: str = Form(...),
     session: Session = Depends(get_session),
     _user: bool = Depends(require_login),
+    device_token: str = Form(""),
+
 ):
     record = VehicleRecord(
         register_number=register_number,
@@ -495,6 +532,7 @@ def create_record(
         policy_number=policy_number,
         validity_date=date.fromisoformat(validity_date),
         insurance_company=insurance_company,
+        device_token=device_token,
     )
     session.add(record)
     session.commit()
@@ -539,6 +577,8 @@ def edit_record_submit(
     insurance_company: str = Form(...),
     session: Session = Depends(get_session),
     _user: bool = Depends(require_login),
+    device_token: str = Form(""),
+
 ):
     record = session.get(VehicleRecord, record_id)
     if not record:
@@ -550,6 +590,7 @@ def edit_record_submit(
     record.policy_number = policy_number
     record.validity_date = date.fromisoformat(validity_date)
     record.insurance_company = insurance_company
+    record.device_token = device_token
     session.add(record)
     session.commit()
     return RedirectResponse(f"/records/{record_id}", status_code=status.HTTP_303_SEE_OTHER)

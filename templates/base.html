@@ -1,64 +1,131 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>TractorCare</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script src="https://cdn.tailwindcss.com"></script>
 
-    <link rel="manifest" href="/static/pwa/manifest.json">
-    <link rel="icon" type="image/png" href="/static/pwa/icon-192.png">
+<head>
+  <meta charset="UTF-8" />
+  <title>TractorCare</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
 
-    <style>
-      /* small custom utilities to complement tailwind */
-      :root{
-        --card-bg: rgba(14,18,24,0.65);
-        --card-border: rgba(255,255,255,0.04);
-        --muted: #98a0ac;
-      }
-
-      .rounded-card { border-radius: 12px; }
-      .card-soft { background: linear-gradient(180deg, rgba(16,20,26,0.6), rgba(8,10,14,0.6)); border: 1px solid var(--card-border); box-shadow: 0 6px 20px rgba(2,6,23,0.6); }
-      .muted { color: var(--muted); }
-      .status-chip { font-weight:600; font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.04); }
-      /* initials badge for avatar-less cards */
-      .initials {
-        width:44px; height:44px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center;
-        font-weight:700; color:white; background:linear-gradient(135deg,#0ea5a3,#2563eb); box-shadow: 0 6px 14px rgba(2,6,23,0.5);
-      }
-      /* keep small clickable area for floating button */
-      .fab { width:48px; height:48px; border-radius:999px; }
-    </style>
-  </head>
-
-  <body class="bg-[#05070a] text-gray-100 min-h-screen antialiased">
-    <header class="p-4 flex items-center justify-between sticky top-0 bg-[#05070a]/75 backdrop-blur z-50 border-b border-white/3">
-      <div class="flex items-center gap-3">
-        {% if back %}
-          <button onclick="history.back()" class="text-gray-300 hover:text-white text-2xl font-bold active:scale-95 transition">←</button>
-        {% endif %}
-        <h1 class="text-lg font-semibold tracking-tight">TractorCare</h1>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <a href="/ocr-upload" class="px-3 py-2 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-500 transition font-medium">Scan</a>
-        <a href="/records/new" class="px-3 py-2 text-sm rounded-lg bg-emerald-500 hover:bg-emerald-400 transition font-medium">Add</a>
-        <a href="/logout" class="px-3 py-2 text-xs rounded-lg border border-white/10 text-gray-300 hover:bg-white/5 transition">Logout</a>
-      </div>
-    </header>
-
-    <main class="p-4 pb-28">
-      {% block content %}{% endblock %}
-    </main>
-
-    <a href="/records/new" class="fixed bottom-6 right-6 bg-emerald-500 text-white fab rounded-full shadow-lg flex items-center justify-center text-3xl hover:bg-emerald-400 transition">+</a>
-
-    <script>
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker.register("/service-worker.js").catch(e => console.log("SW failed", e));
+  <link rel="manifest" href="/static/pwa/manifest.json">
+  <link rel="icon" type="image/png" href="/static/pwa/icon-192.png">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBYAuUVkA9oOHon2i93jZPYOCxxlJ8jvyM",
+      authDomain: "tractorcare-8586f.firebaseapp.com",
+      projectId: "tractorcare-8586f",
+      messagingSenderId: "697692026188",
+      appId: "1:697692026188:web:3dafe18a7b6aa8a1794be9"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const messaging = firebase.messaging();
+  </script>
+  <script>
+    async function registerForPush() {
+      const permission = await Notification.requestPermission();
+      if (permission === "granted") {
+        const token = await messaging.getToken({ vapidKey: "BGd2pZ6QoNSygh2yPG2d_mUMEEiT7EEXlVjNlAfham7q5uIYVH3Zoudqoc0aMxTigWRqXlorXB9Fex79rbKDipc" });
+        fetch("/register-device", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: "token=" + token
         });
       }
-    </script>
-  </body>
+    }
+    registerForPush();
+  </script>
+
+
+  <style>
+    /* small custom utilities to complement tailwind */
+    :root {
+      --card-bg: rgba(14, 18, 24, 0.65);
+      --card-border: rgba(255, 255, 255, 0.04);
+      --muted: #98a0ac;
+    }
+
+    .rounded-card {
+      border-radius: 12px;
+    }
+
+    .card-soft {
+      background: linear-gradient(180deg, rgba(16, 20, 26, 0.6), rgba(8, 10, 14, 0.6));
+      border: 1px solid var(--card-border);
+      box-shadow: 0 6px 20px rgba(2, 6, 23, 0.6);
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .status-chip {
+      font-weight: 600;
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    /* initials badge for avatar-less cards */
+    .initials {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: white;
+      background: linear-gradient(135deg, #0ea5a3, #2563eb);
+      box-shadow: 0 6px 14px rgba(2, 6, 23, 0.5);
+    }
+
+    /* keep small clickable area for floating button */
+    .fab {
+      width: 48px;
+      height: 48px;
+      border-radius: 999px;
+    }
+  </style>
+</head>
+
+<body class="bg-[#05070a] text-gray-100 min-h-screen antialiased">
+  <header
+    class="p-4 flex items-center justify-between sticky top-0 bg-[#05070a]/75 backdrop-blur z-50 border-b border-white/3">
+    <div class="flex items-center gap-3">
+      {% if back %}
+      <button onclick="history.back()"
+        class="text-gray-300 hover:text-white text-2xl font-bold active:scale-95 transition">←</button>
+      {% endif %}
+      <h1 class="text-lg font-semibold tracking-tight">TractorCare</h1>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <a href="/ocr-upload"
+        class="px-3 py-2 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-500 transition font-medium">Scan</a>
+      <a href="/records/new"
+        class="px-3 py-2 text-sm rounded-lg bg-emerald-500 hover:bg-emerald-400 transition font-medium">Add</a>
+      <a href="/logout"
+        class="px-3 py-2 text-xs rounded-lg border border-white/10 text-gray-300 hover:bg-white/5 transition">Logout</a>
+    </div>
+  </header>
+
+  <main class="p-4 pb-28">
+    {% block content %}{% endblock %}
+  </main>
+
+  <a href="/records/new"
+    class="fixed bottom-6 right-6 bg-emerald-500 text-white fab rounded-full shadow-lg flex items-center justify-center text-3xl hover:bg-emerald-400 transition">+</a>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/service-worker.js").catch(e => console.log("SW failed", e));
+      });
+    }
+  </script>
+</body>
+
 </html>

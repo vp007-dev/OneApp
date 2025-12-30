@@ -14,3 +14,8 @@ class VehicleRecord(SQLModel, table=True):
     policy_number: str
     validity_date: date        # YYYY-MM-DD
     insurance_company: str     # NEW: Insurance company name
+    device_token: str = Field(default="")
+
+class Device(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    token: str

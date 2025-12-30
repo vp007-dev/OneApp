@@ -51,6 +51,10 @@
     <button type="submit" class="flex-1 py-3 bg-emerald-500 rounded-xl text-white font-semibold">Save</button>
     <a href="/" class="flex-1 py-3 border rounded-xl text-sm text-gray-200 text-center">Cancel</a>
   </div>
+  <div>
+  <label class="text-xs muted">Android Device Token</label>
+  <input name="device_token" value="{{ record.device_token }}" class="input">
+</div>
 </form>
 
 {% endblock %}
