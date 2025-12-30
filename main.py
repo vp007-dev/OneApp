@@ -502,13 +502,19 @@ def new_record_form(
     return templates.TemplateResponse("new_record.html", {"request": request})
 
 @app.post("/register-device")
-def register_device(token: str = Form(...), session: Session = Depends(get_session)):
-    last = session.exec(select(VehicleRecord).order_by(VehicleRecord.id.desc())).first()
-    if last:
-        last.device_token = token
-        session.add(last)
-        session.commit()
+async def register_device(request: Request, session: Session = Depends(get_session)):
+    data = await request.json()
+    token = data.get("token","").strip()
+
+    if not token:
+        print("❌ EMPTY TOKEN RECEIVED")
+        return {"ok": False}
+
+    session.add(Device(token=token))
+    session.commit()
+    print("✅ TOKEN SAVED:", token[:30])
     return {"ok": True}
+
 
 @app.post("/records/new")
 def create_record(
