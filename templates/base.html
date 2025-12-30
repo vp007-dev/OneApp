@@ -120,12 +120,8 @@
     class="fixed bottom-6 right-6 bg-emerald-500 text-white fab rounded-full shadow-lg flex items-center justify-center text-3xl hover:bg-emerald-400 transition">+</a>
 
   <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/service-worker.js").catch(e => console.log("SW failed", e));
-      });
-    }
-  </script>
+  navigator.serviceWorker.register("/firebase-messaging-sw.js");
+</script>
 </body>
 
 </html>

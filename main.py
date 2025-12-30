@@ -752,6 +752,9 @@ async def add_rows_bulk(
     session.commit()
     return RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
 
+@app.get("/firebase-messaging-sw.js", include_in_schema=False)
+def fcm_worker():
+    return FileResponse("firebase-messaging-sw.js")
 
 # ---------- single-record AI extraction ----------
 def ai_extract_fields_openrouter(text: str) -> dict:
