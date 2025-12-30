@@ -762,6 +762,48 @@ async def add_rows_bulk(
 def fcm_worker():
     return FileResponse("firebase-messaging-sw.js")
 
+@app.get("/token", response_class=HTMLResponse)
+def get_my_token(request: Request):
+    return HTMLResponse("""
+<!DOCTYPE html>
+<html>
+<head>
+<title>TractorCare Token</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+</head>
+<body style="background:black;color:white;font-family:monospace;padding:20px">
+
+<h2>TractorCare Device Token</h2>
+<p id="status">Waiting for permission…</p>
+<pre id="token" style="white-space:break-spaces;"></pre>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBYAuUVkA9oOHon2i93jZPYOCxxlJ8jvyM",
+  authDomain: "tractorcare-8586f.firebaseapp.com",
+  projectId: "tractorcare-8586f",
+  messagingSenderId: "697692026188",
+  appId: "1:697692026188:web:3dafe18a7b6aa8a1794be9"
+};
+
+firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging();
+
+Notification.requestPermission().then(async perm=>{
+  if(perm==="granted"){
+    const tok = await messaging.getToken({ vapidKey:"BGd2pZ6QoNSygh2yPG2d_mUMEEiT7EEXlVjNlAfham7q5uIYVH3Zoudqoc0aMxTigWRqXlorXB9Fex79rbKDipc"});
+    document.getElementById("token").innerText = tok;
+    document.getElementById("status").innerText = "TOKEN GENERATED:";
+  } else {
+    document.getElementById("status").innerText = "Permission denied.";
+  }
+});
+</script>
+</body>
+</html>
+""")
+
 # ---------- single-record AI extraction ----------
 def ai_extract_fields_openrouter(text: str) -> dict:
     """
