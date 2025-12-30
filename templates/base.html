@@ -10,8 +10,22 @@
   <link rel="manifest" href="/static/pwa/manifest.json">
   <link rel="icon" type="image/png" href="/static/pwa/icon-192.png">
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
-  <script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBYAuUVkA9oOHon2i93jZPYOCxxlJ8jvyM",
+  authDomain: "tractorcare-8586f.firebaseapp.com",
+  projectId: "tractorcare-8586f",
+  messagingSenderId: "697692026188",
+  appId: "1:697692026188:web:3dafe18a7b6aa8a1794be9"
+};
+
+firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging();   // <-- THIS LINE WAS MISSING
+</script>
+
+<script>
 async function registerForPush() {
   const permission = await Notification.requestPermission();
   console.log("Permission:", permission);
@@ -24,21 +38,15 @@ async function registerForPush() {
 
     console.log("🔥 FCM TOKEN:", token);
 
-    if (!token) {
-      alert("Token is EMPTY — Firebase blocked it.");
-      return;
-    }
-
     fetch("/register-device", {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({ token: token })
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({token:token})
     });
   }
 }
 registerForPush();
 </script>
-
 
   <style>
     /* small custom utilities to complement tailwind */
