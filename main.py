@@ -804,6 +804,22 @@ Notification.requestPermission().then(async perm=>{
 </html>
 """)
 
+@app.get("/test-push")
+def test_push():
+    from sqlmodel import Session
+    with Session(engine) as session:
+        r = session.exec(select(VehicleRecord)).first()
+        if not r or not r.device_token:
+            return {"error": "No record with device token found"}
+
+        send_push(
+            r.device_token,
+            "🔥 TractorCare Test",
+            "This is your first real Android notification!"
+        )
+        return {"ok": True}
+
+
 # ---------- single-record AI extraction ----------
 def ai_extract_fields_openrouter(text: str) -> dict:
     """
