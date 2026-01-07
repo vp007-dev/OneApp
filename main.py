@@ -42,6 +42,9 @@ from openpyxl.utils.datetime import from_excel as openpyxl_from_excel
 from starlette.middleware.sessions import SessionMiddleware
 
 from models import VehicleRecord
+import smtplib
+from email.message import EmailMessage
+
 
 # ---------- Config ----------
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -55,6 +58,9 @@ APP_PASSWORD = os.getenv("APP_PASSWORD")
 
 # Session lifetime (seconds) before forcing re-login
 SESSION_TIMEOUT_SECONDS = 5 * 60  # e.g. 5 minutes
+ALERT_EMAIL = os.getenv("ALERT_EMAIL")  # your email (render env)
+SMTP_EMAIL  = os.getenv("SMTP_EMAIL")
+SMTP_PASS   = os.getenv("SMTP_PASS")
 
 
 # ---------- App & Templates ----------
@@ -102,11 +108,19 @@ def check_expiring_policies():
     with Session(engine) as session:
         for r in session.exec(select(VehicleRecord)).all():
             days = (r.validity_date - today).days
-            if days == 5 and r.device_token:
-                send_push(
-                    r.device_token,
-                    "🚨 Policy Expiring",
-                    f"{r.vehicle_model} expires in 5 days!"
+
+            if days == 7:
+                send_email(
+                    "⚠️ Tractor Policy Expiring in 7 Days",
+                    f"""
+Tractor: {r.vehicle_model}
+RC No: {r.register_number}
+Owner: {r.owner_name}
+Policy No: {r.policy_number}
+Valid Till: {r.validity_date}
+
+Renew immediately.
+"""
                 )
 
 
@@ -406,6 +420,17 @@ def send_push(token, title, body):
     )
     messaging.send(msg)
 
+def send_email(subject, body):
+    msg = EmailMessage()
+    msg["From"] = SMTP_EMAIL
+    msg["To"] = ALERT_EMAIL
+    msg["Subject"] = subject
+    msg.set_content(body)
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        smtp.login(SMTP_EMAIL, SMTP_PASS)
+        smtp.send_message(msg)
+
 
 
 # ---------- Login / Logout ----------
@@ -599,7 +624,7 @@ def edit_record_submit(
     record.device_token = device_token
     session.add(record)
     session.commit()
-    return RedirectResponse(f"/records/{record_id}", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(f"/", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @app.post("/records/{record_id}/delete")
