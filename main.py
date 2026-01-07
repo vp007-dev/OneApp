@@ -439,6 +439,13 @@ def login_form(request: Request):
     # Always show login page; user must log in again each time session expired
     return templates.TemplateResponse("login.html", {"request": request, "error": None})
 
+@app.get("/test-mail")
+def test_mail():
+    send_email(
+        "🚜 TractorCare Test Mail",
+        "Your TractorCare email alert system is working perfectly!"
+    )
+    return "Mail sent. Check your inbox."
 
 @app.post("/login", response_class=HTMLResponse)
 async def login_submit(
