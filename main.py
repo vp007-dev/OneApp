@@ -421,15 +421,24 @@ def send_push(token, title, body):
     messaging.send(msg)
 
 def send_email(subject, body):
-    msg = EmailMessage()
-    msg["From"] = SMTP_EMAIL
-    msg["To"] = ALERT_EMAIL
-    msg["Subject"] = subject
-    msg.set_content(body)
+    key = os.getenv("MAILGUN_KEY")
+    domain = os.getenv("MAILGUN_DOMAIN")
+    to = os.getenv("ALERT_EMAIL")
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-        smtp.login(SMTP_EMAIL, SMTP_PASS)
-        smtp.send_message(msg)
+    if not key or not domain or not to:
+        print("Mailgun not configured")
+        return
+
+    requests.post(
+        f"https://api.mailgun.net/v3/{domain}/messages",
+        auth=("api", key),
+        data={
+            "from": f"TractorCare <mailgun@{domain}>",
+            "to": [to],
+            "subject": subject,
+            "text": body,
+        },
+    )
 
 
 
