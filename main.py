@@ -724,8 +724,9 @@ def login_page(request: Request):
     error = "Your session expired. Please sign in again." if expired else None
 
     return templates.TemplateResponse(
-        "login.html",
-        {
+        request=request,
+        name="login.html",
+        context={
             "request": request,
             "error": error,
             "csrf_token": csrf_token,
@@ -749,8 +750,9 @@ async def login_submit(
     allowed, seconds_left = check_login_rate_limit(client_ip)
     if not allowed:
         return templates.TemplateResponse(
-            "login.html",
-            {
+            request=request,
+            name="login.html",
+            context={
                 "request": request,
                 "error": f"Too many failed attempts. Please wait {seconds_left} seconds before trying again.",
                 "csrf_token": get_csrf_token(request),
@@ -762,8 +764,9 @@ async def login_submit(
     # CSRF check
     if not verify_csrf(request, csrf_token):
         return templates.TemplateResponse(
-            "login.html",
-            {
+            request=request,
+            name="login.html",
+            context={
                 "request": request,
                 "error": "Security validation failed (invalid CSRF token). Please try again.",
                 "csrf_token": get_csrf_token(request),
@@ -784,8 +787,9 @@ async def login_submit(
 
     record_failed_login(client_ip)
     return templates.TemplateResponse(
-        "login.html",
-        {
+        request=request,
+        name="login.html",
+        context={
             "request": request,
             "error": "Invalid username or password.",
             "csrf_token": get_csrf_token(request),
@@ -862,8 +866,9 @@ def dashboard(
         })
 
     return templates.TemplateResponse(
-        "index.html",
-        {
+        request=request,
+        name="index.html",
+        context={
             "request": request,
             "records": enriched,
             "today": today,
@@ -885,8 +890,9 @@ def new_record_form(
     current_user: str = Depends(require_login),
 ):
     return templates.TemplateResponse(
-        "new_record.html",
-        {"request": request, "csrf_token": get_csrf_token(request), "back": "/"},
+        request=request,
+        name="new_record.html",
+        context={"request": request, "csrf_token": get_csrf_token(request), "back": "/"},
     )
 
 
@@ -966,8 +972,9 @@ def record_detail(
         wa_url = f"https://api.whatsapp.com/send?text={quote(wa_text)}"
 
     return templates.TemplateResponse(
-        "record_detail.html",
-        {
+        request=request,
+        name="record_detail.html",
+        context={
             "request": request,
             "record": record,
             "days_left": days_left,
@@ -990,8 +997,9 @@ def edit_record_form(
     if not record:
         raise HTTPException(status_code=404, detail="Record not found")
     return templates.TemplateResponse(
-        "edit_record.html",
-        {
+        request=request,
+        name="edit_record.html",
+        context={
             "request": request,
             "record": record,
             "csrf_token": get_csrf_token(request),
@@ -1071,8 +1079,9 @@ def upload_page(
     current_user: str = Depends(require_login),
 ):
     return templates.TemplateResponse(
-        "ocr_upload.html",
-        {"request": request, "csrf_token": get_csrf_token(request), "back": "/"},
+        request=request,
+        name="ocr_upload.html",
+        context={"request": request, "csrf_token": get_csrf_token(request), "back": "/"},
     )
 
 
@@ -1096,8 +1105,9 @@ async def ocr_upload(
     if filename.endswith((".xlsx", ".xlsm")):
         entries = parse_excel_rows(raw)
         return templates.TemplateResponse(
-            "ocr_multi_result.html",
-            {
+            request=request,
+            name="ocr_multi_result.html",
+            context={
                 "request": request,
                 "entries": entries,
                 "csrf_token": get_csrf_token(request),
@@ -1110,8 +1120,9 @@ async def ocr_upload(
     fields = ai_extract_fields_openrouter(extracted_text)
 
     return templates.TemplateResponse(
-        "ocr_result.html",
-        {
+        request=request,
+        name="ocr_result.html",
+        context={
             "request": request,
             "fields": fields,
             "raw_text": extracted_text[:1500],
