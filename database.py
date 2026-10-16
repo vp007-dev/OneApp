@@ -24,6 +24,14 @@ else:
         DATABASE_URL = RAW_DATABASE_URL.replace("postgres://", "postgresql://", 1)
     else:
         DATABASE_URL = RAW_DATABASE_URL
+
+    # Auto-fallback to psycopg2 driver if psycopg (v3) is not installed
+    if DATABASE_URL.startswith("postgresql://"):
+        try:
+            import psycopg  # noqa: F401
+        except ImportError:
+            DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
+
     IS_SQLITE = DATABASE_URL.startswith("sqlite")
 
 # Engine configuration with health checks & connection pooling

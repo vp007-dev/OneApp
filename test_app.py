@@ -9,6 +9,8 @@ from sqlmodel import Session, select
 from database import engine, init_db
 from models import VehicleRecord
 from security import (
+    APP_USERNAME,
+    APP_PASSWORD,
     verify_credentials,
     check_login_rate_limit,
     record_failed_login,
@@ -34,9 +36,9 @@ def run_tests():
     print("✅ [1/7] Database schema & migrations verified.")
 
     # 2. Security: Credential Constant-Time Verification & Rate Limiter
-    assert verify_credentials("admin", "tractorcare2026") is True, "Default admin check failed"
-    assert verify_credentials("admin", "wrongpassword") is False, "Invalid pass check failed"
-    assert verify_credentials("wronguser", "tractorcare2026") is False, "Invalid user check failed"
+    assert verify_credentials(APP_USERNAME, APP_PASSWORD) is True, "Admin credentials check failed"
+    assert verify_credentials(APP_USERNAME, "wrongpassword123") is False, "Invalid pass check failed"
+    assert verify_credentials("wronguser999", APP_PASSWORD) is False, "Invalid user check failed"
     print("✅ [2/7] Constant-time credential authentication verified.")
 
     # Rate Limiting
@@ -120,7 +122,7 @@ def run_tests():
         # Post login with CSRF
         login_res = client.post(
             "/login",
-            data={"username": "admin", "password": "tractorcare2026", "csrf_token": csrf_tok},
+            data={"username": APP_USERNAME, "password": APP_PASSWORD, "csrf_token": csrf_tok},
             follow_redirects=False
         )
         assert login_res.status_code == 303, f"Login failed with code {login_res.status_code}"
