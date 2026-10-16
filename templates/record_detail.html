@@ -1,52 +1,168 @@
 {% extends "base.html" %}
 {% set back = "/" %}
+{% block title %}{{ record.vehicle_model }} ({{ record.register_number }}) — TractorCare{% endblock %}
 {% block content %}
 
-<h2 class="text-lg font-semibold mb-4 flex items-center justify-between">
-  Record Details
-  <div class="flex gap-2 items-center">
-    <a href="/records/{{ record.id }}/edit" class="px-3 py-1 rounded-lg border border-white/10 text-sm hover:bg-white/2">Edit</a>
+<div class="max-w-4xl mx-auto space-y-6">
+  <!-- Top Hero Card (Neo-Editorial Neo-Brutalist) -->
+  <div class="saas-card p-6 sm:p-8 relative overflow-hidden" style="border-radius: 32px;">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
+      <div class="flex items-center gap-4 min-w-0">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center font-display font-black text-xl text-white shadow-lg flex-shrink-0" style="background: var(--color-coral);">
+          {{ record.vehicle_model[:2] | upper }}
+        </div>
+        <div class="min-w-0">
+          <h1 class="page-title truncate">{{ record.vehicle_model }}</h1>
+          <div class="flex items-center gap-2 mt-1.5">
+            <span class="plate-badge text-sm">{{ record.register_number }}</span>
+            <button onclick="copyToClipboard('{{ record.register_number }}')" class="text-xs text-slate-400 hover:text-white transition" title="Copy registration">📋</button>
+          </div>
+        </div>
+      </div>
 
-    <form method="post" action="/records/{{ record.id }}/delete" onsubmit="return confirm('Delete this record?');">
-      <button type="submit" class="px-3 py-1 rounded-lg border border-red-400 text-sm text-red-300 hover:bg-red-500/10">Delete</button>
-    </form>
+      <!-- Status Tag -->
+      <div>
+        {% if days_left < 0 %}
+          <span class="fleet-stat-badge text-xs px-3 py-1.5" style="background: rgba(255,255,255,0.1); color: #94a3b8;">Lapsed {{ days_left|abs }}d ago</span>
+        {% elif days_left <= 7 %}
+          <span class="fleet-stat-badge badge-urgent text-xs px-3 py-1.5"><span class="w-2 h-2 rounded-full bg-[#ff573d] animate-ping"></span>Critical · {{ days_left }}d left</span>
+        {% elif days_left <= 30 %}
+          <span class="fleet-stat-badge badge-soon text-xs px-3 py-1.5">Due in {{ days_left }}d</span>
+        {% else %}
+          <span class="fleet-stat-badge badge-ok text-xs px-3 py-1.5">Active · {{ days_left }}d left</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Timeline Progress Meter -->
+    <div class="my-6">
+      <div class="flex justify-between text-xs font-bold text-slate-400 mb-2 font-mono">
+        <span>Today · {{ today }}</span>
+        <span>Expiration Date · {{ record.validity_date }}</span>
+      </div>
+      <div class="progress-track h-3 bg-white/10 rounded-full overflow-hidden p-0.5">
+        {% if days_left < 0 %}
+          <div class="progress-fill h-full rounded-full" style="width: 100%; background: #64748b;"></div>
+        {% elif days_left <= 7 %}
+          <div class="progress-fill h-full rounded-full" style="width: 92%; background: var(--color-coral);"></div>
+        {% elif days_left <= 30 %}
+          <div class="progress-fill h-full rounded-full" style="width: 65%; background: var(--color-yellow);"></div>
+        {% else %}
+          <div class="progress-fill h-full rounded-full" style="width: 30%; background: #10b981;"></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Prominent Action Row -->
+    <div class="flex flex-wrap items-center gap-2.5 pt-2">
+      <a href="{{ wa_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp">
+        <span>💬</span>
+        <span>Send WhatsApp Reminder</span>
+      </a>
+      <a href="/records/{{ record.id }}/edit" class="btn btn-ghost">
+        <span>✏️</span>
+        <span>Edit Policy</span>
+      </a>
+      {% if record.owner_phone %}
+      <a href="tel:{{ record.owner_phone | replace(' ', '') }}" class="btn btn-ghost">
+        <span>📞</span>
+        <span>Call Owner</span>
+      </a>
+      {% endif %}
+      <button onclick="document.getElementById('del-modal').classList.remove('hidden')" class="btn btn-danger">
+        <span>🗑️</span>
+        <span>Delete Policy</span>
+      </button>
+    </div>
   </div>
-</h2>
 
-<div class="space-y-3 rounded-2xl bg-slate-900 border border-slate-800 p-4">
-  <div>
-    <p class="text-sm text-slate-400">Register Number</p>
-    <p class="text-base font-semibold">{{ record.register_number }}</p>
+  <!-- Detailed Specifications Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+    <!-- Owner Card -->
+    <div class="saas-card p-6" style="border-radius: 26px;">
+      <p class="font-display text-xs font-bold uppercase tracking-wider text-[#f6c445] mb-4">👤 Owner Profile</p>
+      <dl class="space-y-3.5">
+        <div class="detail-row">
+          <dt>Full Name</dt>
+          <dd class="text-white">{{ record.owner_name }}</dd>
+        </div>
+        <div class="detail-row">
+          <dt>Contact Phone</dt>
+          <dd class="font-mono text-emerald-400 flex items-center justify-end gap-1.5">
+            <span>{{ record.owner_phone or '—' }}</span>
+            {% if record.owner_phone %}
+            <button onclick="copyToClipboard('{{ record.owner_phone }}')" class="text-xs text-slate-400 hover:text-white" title="Copy phone">📋</button>
+            {% endif %}
+          </dd>
+        </div>
+        <div class="detail-row">
+          <dt>Physical Address</dt>
+          <dd class="text-slate-300 font-medium text-xs leading-relaxed whitespace-pre-line">{{ record.address or '—' }}</dd>
+        </div>
+        {% if record.notes %}
+        <div class="detail-row">
+          <dt>Coverage Notes</dt>
+          <dd class="text-slate-300 font-medium text-xs">{{ record.notes }}</dd>
+        </div>
+        {% endif %}
+      </dl>
+    </div>
+
+    <!-- Policy Card -->
+    <div class="saas-card p-6" style="border-radius: 26px;">
+      <p class="font-display text-xs font-bold uppercase tracking-wider text-[#7579e7] mb-4">📄 Policy Specification</p>
+      <dl class="space-y-3.5">
+        <div class="detail-row">
+          <dt>Policy Number</dt>
+          <dd class="font-mono text-emerald-400 flex items-center justify-end gap-1.5">
+            <span>{{ record.policy_number }}</span>
+            <button onclick="copyToClipboard('{{ record.policy_number }}')" class="text-xs text-slate-400 hover:text-white" title="Copy policy number">📋</button>
+          </dd>
+        </div>
+        <div class="detail-row">
+          <dt>Insurance Provider</dt>
+          <dd class="text-white">{{ record.insurance_company or 'Standard General Insurer' }}</dd>
+        </div>
+        <div class="detail-row">
+          <dt>Expiration Date</dt>
+          <dd class="font-mono text-white">{{ record.validity_date }}</dd>
+        </div>
+        <div class="detail-row">
+          <dt>Remaining Period</dt>
+          <dd class="text-white">
+            {% if days_left >= 0 %}
+              <span class="font-extrabold text-emerald-400">{{ days_left }}</span> days remaining
+            {% else %}
+              <span class="font-extrabold text-[#ff573d]">Lapsed {{ days_left | abs }} days ago</span>
+            {% endif %}
+          </dd>
+        </div>
+      </dl>
+    </div>
   </div>
+</div>
 
-  <div>
-    <p class="text-sm text-slate-400">Vehicle Model</p>
-    <p class="text-base font-semibold">{{ record.vehicle_model }}</p>
-  </div>
-
-  <div>
-    <p class="text-sm text-slate-400">Owner Name</p>
-    <p class="text-base font-semibold">{{ record.owner_name }}</p>
-  </div>
-
-  <div>
-    <p class="text-sm text-slate-400">Address</p>
-    <p class="text-base font-semibold whitespace-pre-line">{{ record.address }}</p>
-  </div>
-
-  <div>
-    <p class="text-sm text-slate-400">Policy Number</p>
-    <p class="text-base font-semibold">{{ record.policy_number }}</p>
-  </div>
-
-  <div>
-    <p class="text-sm text-slate-400">Validity Date</p>
-    <p class="text-base font-semibold">{{ record.validity_date }}</p>
-  </div>
-
-  <div>
-    <p class="text-sm text-slate-400">Insurance Company</p>
-    <p class="text-base font-semibold">{{ record.insurance_company }}</p>
+<!-- Modal Delete Confirmation -->
+<div id="del-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 hidden">
+  <div class="saas-card max-w-sm w-full p-6 shadow-2xl border-white/10" style="border-radius: 26px;">
+    <div class="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center text-xl mb-4">
+      🗑️
+    </div>
+    <h3 class="text-base font-extrabold text-white">Delete Policy Record?</h3>
+    <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+      This permanently deletes policy <span class="font-mono text-white font-bold">{{ record.policy_number }}</span> for <span class="text-white font-bold">{{ record.vehicle_model }}</span>. This action cannot be undone.
+    </p>
+    <div class="flex items-center gap-2 mt-6">
+      <button onclick="document.getElementById('del-modal').classList.add('hidden')" class="btn btn-ghost flex-1">
+        Cancel
+      </button>
+      <form method="post" action="/records/{{ record.id }}/delete" class="flex-1">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+        <button type="submit" class="btn btn-danger w-full">
+          Confirm Delete
+        </button>
+      </form>
+    </div>
   </div>
 </div>
 

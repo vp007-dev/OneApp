@@ -1,26 +1,111 @@
 {% extends "base.html" %}
 {% set back = "/" %}
+{% block title %}Smart Scan &amp; OCR — TractorCare SaaS{% endblock %}
 {% block content %}
 
-<h2 class="text-xl font-semibold mb-4">Scan Policy Document</h2>
+<div class="max-w-2xl mx-auto">
+  <div class="saas-card p-6 sm:p-8" style="border-radius: 32px;">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto text-2xl mb-4 shadow-lg text-white" style="background: var(--color-coral);">
+        📷
+      </div>
+      <h1 class="page-title">OCR &amp; AI Document Intelligence</h1>
+      <p class="page-subtitle mt-1 max-w-md mx-auto">
+        Upload physical policy photos, certificates, or Excel fleet spreadsheets. Automated extraction parses plates, expiry dates, and insurers.
+      </p>
+    </div>
 
-<div class="bg-[#0d1117] border border-white/10 rounded-2xl p-4 space-y-4">
-  <p class="text-gray-400 text-sm">
-    Upload an image, PDF, or Excel file. The app will try to extract policy details using OCR + AI.
-  </p>
+    <!-- Upload Form -->
+    <form id="ocrForm" method="post" enctype="multipart/form-data" action="/ocr-upload" class="space-y-6">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
 
-  <form id="ocrForm" method="post" enctype="multipart/form-data" action="/ocr-upload" class="space-y-4">
-    <input type="file" name="file" required accept="image/*,.pdf,.xlsx" class="w-full text-sm bg-[#0f1420] border border-white/10 p-3 rounded-xl text-gray-300">
-    <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-white font-semibold">Scan Document</button>
-  </form>
+      <!-- Drag & Drop Zone -->
+      <div
+        id="drop-zone"
+        class="border-2 border-dashed border-white/20 hover:border-[#ff573d] rounded-3xl p-8 text-center bg-[#121215] hover:bg-black/40 transition cursor-pointer group"
+        onclick="document.getElementById('file-input').click()"
+      >
+        <input
+          type="file"
+          id="file-input"
+          name="file"
+          required
+          accept="image/*,.xlsx,.xlsm,.csv"
+          class="hidden"
+          onchange="handleFileSelect(this)"
+        />
 
-  <div id="loading" class="hidden text-center text-gray-300 text-sm">Extracting text using AI... Please wait.</div>
+        <div class="space-y-3">
+          <div class="w-12 h-12 rounded-2xl bg-white/10 text-white flex items-center justify-center mx-auto text-xl group-hover:scale-105 transition-transform">
+            📁
+          </div>
+          <div>
+            <p class="text-sm font-bold text-white">Click or drag document to scan</p>
+            <p class="text-xs text-slate-400 mt-0.5">Supports images (PNG, JPG, WEBP) &amp; Excel sheets (Max 15MB)</p>
+          </div>
+          <div id="file-name-preview" class="hidden font-mono text-xs text-[#f6c445] font-bold bg-[#f6c445]/10 py-1 px-3 rounded-full border border-[#f6c445]/25 inline-block"></div>
+        </div>
+      </div>
+
+      <!-- Format Badges -->
+      <div class="flex flex-wrap items-center justify-center gap-2 text-[11px] font-bold text-slate-400">
+        <span class="px-2.5 py-1 rounded-full bg-[#121215] border border-white/10 font-mono">.PNG</span>
+        <span class="px-2.5 py-1 rounded-full bg-[#121215] border border-white/10 font-mono">.JPG</span>
+        <span class="px-2.5 py-1 rounded-full bg-[#121215] border border-white/10 font-mono">.WEBP</span>
+        <span class="px-2.5 py-1 rounded-full bg-[#121215] border border-white/10 font-mono">.XLSX</span>
+        <span class="px-2.5 py-1 rounded-full bg-[#121215] border border-white/10 font-mono">.XLSM</span>
+      </div>
+
+      <!-- Submit Button -->
+      <button
+        type="submit"
+        id="scan-button"
+        class="w-full py-3.5 px-4 rounded-2xl font-display font-bold uppercase tracking-wider text-sm text-white transition flex items-center justify-center gap-2 shadow-lg"
+        style="background: var(--color-coral);"
+      >
+        <span>Extract &amp; Parse Document</span>
+        <span>→</span>
+      </button>
+    </form>
+  </div>
 </div>
 
 <script>
-  document.getElementById("ocrForm").addEventListener("submit", function() {
-    document.getElementById("loading").classList.remove("hidden");
-  });
+  function handleFileSelect(input) {
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const preview = document.getElementById('file-name-preview');
+      preview.textContent = `Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+      preview.classList.remove('hidden');
+    }
+  }
+
+  const dropZone = document.getElementById('drop-zone');
+  if (dropZone) {
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-[#ff573d]', 'bg-black/60');
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-[#ff573d]', 'bg-black/60');
+      }, false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files.length > 0) {
+        document.getElementById('file-input').files = files;
+        handleFileSelect(document.getElementById('file-input'));
+      }
+    });
+  }
 </script>
 
 {% endblock %}

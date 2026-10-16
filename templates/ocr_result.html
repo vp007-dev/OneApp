@@ -1,30 +1,170 @@
 {% extends "base.html" %}
 {% set back = "/ocr-upload" %}
+{% block title %}Verify Extracted Details — TractorCare SaaS{% endblock %}
 {% block content %}
 
-<h2 class="text-xl font-semibold mb-4">Confirm Extracted Details</h2>
-
-<div class="bg-[#0d1117] border border-white/10 rounded-2xl p-4 space-y-4">
-  <p class="text-gray-400 text-sm">AI has extracted details. Review and correct if needed before saving.</p>
-
-  <form method="post" action="/records/add_from_ocr" class="space-y-4">
-    {% for field, label in {
-        'register_number': 'Register Number',
-        'vehicle_model': 'Vehicle Model',
-        'owner_name': 'Owner Name',
-        'address': 'Address',
-        'policy_number': 'Policy Number',
-        'validity_date': 'Validity Date',
-        'insurance_company': 'Insurance Company'
-    }.items() %}
-      <div class="space-y-1">
-        <label class="text-sm text-gray-300">{{ label }}</label>
-        <input type="text" name="{{ field }}" value="{{ fields[field] }}" class="w-full bg-[#0f1420] border border-white/10 p-3 rounded-xl text-gray-200" required>
+<div class="max-w-2xl mx-auto">
+  <div class="saas-card p-6 sm:p-8 anim-fade-up">
+    <!-- Header -->
+    <div class="flex items-center justify-between pb-5 mb-6 border-b border-slate-800/80">
+      <div>
+        <h1 class="page-title">Confirm Extracted Details</h1>
+        <p class="page-subtitle mt-0.5">Automated OCR &amp; heuristics extracted the following policy fields.</p>
       </div>
-    {% endfor %}
+      <a href="/ocr-upload" class="btn btn-ghost btn-sm">Scan Another</a>
+    </div>
 
-    <button class="w-full py-3 bg-emerald-500 rounded-xl text-white font-semibold">Save to Database</button>
-  </form>
+    <form method="post" action="/records/add_from_ocr" class="space-y-5">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Vehicle Model -->
+        <div class="field">
+          <label class="field-label" for="vehicle_model">
+            <span>Vehicle Model</span>
+            <span class="req">*</span>
+          </label>
+          <input
+            type="text"
+            id="vehicle_model"
+            name="vehicle_model"
+            required
+            value="{{ fields.vehicle_model or '' }}"
+            placeholder="e.g. Mahindra 575 DI"
+          />
+        </div>
+
+        <!-- Registration Plate -->
+        <div class="field">
+          <label class="field-label" for="register_number">
+            <span>Registration Plate</span>
+            <span class="req">*</span>
+          </label>
+          <input
+            type="text"
+            id="register_number"
+            name="register_number"
+            required
+            value="{{ fields.register_number or '' }}"
+            placeholder="e.g. UP 80 XX 1234"
+            class="font-mono upper"
+            oninput="this.value = this.value.toUpperCase()"
+          />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Owner Name -->
+        <div class="field">
+          <label class="field-label" for="owner_name">
+            <span>Owner Name</span>
+            <span class="req">*</span>
+          </label>
+          <input
+            type="text"
+            id="owner_name"
+            name="owner_name"
+            required
+            value="{{ fields.owner_name or '' }}"
+            placeholder="e.g. Ramesh Kumar"
+          />
+        </div>
+
+        <!-- Owner Phone -->
+        <div class="field">
+          <label class="field-label" for="owner_phone">
+            <span>Owner Phone</span>
+          </label>
+          <input
+            type="text"
+            id="owner_phone"
+            name="owner_phone"
+            value="{{ fields.owner_phone or '' }}"
+            placeholder="e.g. +91 9876543210"
+            class="font-mono"
+          />
+        </div>
+      </div>
+
+      <!-- Address -->
+      <div class="field">
+        <label class="field-label" for="address">
+          <span>Address</span>
+        </label>
+        <textarea
+          id="address"
+          name="address"
+          rows="2"
+        >{{ fields.address or '' }}</textarea>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Policy Number -->
+        <div class="field">
+          <label class="field-label" for="policy_number">
+            <span>Policy Identifier</span>
+            <span class="req">*</span>
+          </label>
+          <input
+            type="text"
+            id="policy_number"
+            name="policy_number"
+            required
+            value="{{ fields.policy_number or '' }}"
+            placeholder="e.g. POL-123456"
+            class="font-mono upper"
+          />
+        </div>
+
+        <!-- Expiration Date -->
+        <div class="field">
+          <label class="field-label" for="validity_date">
+            <span>Validity Expiry</span>
+            <span class="req">*</span>
+          </label>
+          <input
+            type="date"
+            id="validity_date"
+            name="validity_date"
+            required
+            value="{{ fields.validity_date or '' }}"
+            class="font-mono"
+          />
+        </div>
+      </div>
+
+      <!-- Insurance Provider -->
+      <div class="field">
+        <label class="field-label" for="insurance_company">
+          <span>Insurance Provider</span>
+        </label>
+        <input
+          type="text"
+          id="insurance_company"
+          name="insurance_company"
+          value="{{ fields.insurance_company or '' }}"
+          placeholder="e.g. ICICI Lombard"
+        />
+      </div>
+
+      {% if raw_text %}
+      <div class="pt-2">
+        <details class="text-xs text-slate-400 bg-slate-900/60 rounded-lg p-3 border border-slate-800">
+          <summary class="cursor-pointer font-bold text-slate-300 hover:text-white transition">View Extracted OCR Text</summary>
+          <pre class="mt-2 text-[11px] font-mono text-slate-400 whitespace-pre-wrap max-h-36 overflow-y-auto p-2 bg-black/40 rounded">{{ raw_text }}</pre>
+        </details>
+      </div>
+      {% endif %}
+
+      <!-- Action Footer -->
+      <div class="pt-4 flex items-center justify-end gap-3 border-t border-slate-800/80">
+        <a href="/ocr-upload" class="btn btn-ghost">Discard</a>
+        <button type="submit" class="btn btn-primary">
+          Save to Fleet Database
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
 {% endblock %}

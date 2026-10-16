@@ -1,16 +1,22 @@
 #!/usr/bin/env bash
-# start.sh — launch TractorCare FastAPI app with Gunicorn + Uvicorn worker
-
-# Fail on first error
+# start.sh — Launch TractorCare FastAPI app in production mode
 set -e
 
-# Use PORT from environment (Render sets this), default to 8000 for local runs
 PORT=${PORT:-8000}
+WORKERS=${WEB_CONCURRENCY:-3}
 
-echo "Starting TractorCare on port ${PORT}..."
+echo "🚜 Starting TractorCare v2.0 on port ${PORT} with ${WORKERS} workers..."
 
-# Run Gunicorn with Uvicorn worker
-exec gunicorn main:app \
-  -w 3 \
+# Find gunicorn executable (virtualenv or global)
+if [ -f "./.venv/bin/gunicorn" ]; then
+  GUNICORN_BIN="./.venv/bin/gunicorn"
+else
+  GUNICORN_BIN="gunicorn"
+fi
+
+exec ${GUNICORN_BIN} main:app \
+  -w ${WORKERS} \
   -k uvicorn.workers.UvicornWorker \
-  -b 0.0.0.0:${PORT}
+  -b 0.0.0.0:${PORT} \
+  --access-logfile - \
+  --error-logfile -

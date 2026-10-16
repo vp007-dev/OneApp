@@ -1,85 +1,452 @@
 {% extends "base.html" %}
+{% block title %}Fleet Dashboard — TractorCare SaaS{% endblock %}
 {% block content %}
 
-<div class="mb-4">
-  <div class="rounded-card card-soft p-4">
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-lg font-semibold">Overview</h2>
-        <p class="text-sm muted mt-1">Today is {{ today }} · <span class="text-emerald-400">{{ records|length }}</span> records</p>
+<!-- ==============================================================================
+     TOP GREETING & LOCATION HEADER (Hi, Hanna / Fleet Manager)
+     ============================================================================== -->
+<div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-6">
+  <div class="flex items-center gap-3">
+    <img src="/static/img/avatar_hanna.jpg" alt="Fleet Manager" class="avatar-badge-img w-11 h-11" />
+    <div>
+      <div class="flex items-center gap-2">
+        <h1 class="text-xl font-bold font-display uppercase tracking-tight text-white dark-text-inherit">Hi, Hanna!</h1>
+        <span class="text-[10px] font-bold bg-[#ff573d] text-white px-2 py-0.5 rounded-full uppercase">Fleet Intel</span>
       </div>
-      <div class="text-right">
-        <a href="/ocr-upload" class="text-sm px-3 py-2 bg-indigo-600 rounded-lg">Scan Policy</a>
+      <p class="text-xs text-slate-600 dark:text-slate-400 font-semibold mt-0.5">Real-time insurance expiration tracking &amp; 1-click WhatsApp reminders.</p>
+    </div>
+  </div>
+
+  <!-- Location / Fleet Selector Pill & Actions -->
+  <div class="flex items-center gap-2">
+    <div class="venue-dropdown-pill cursor-pointer" onclick="showToast('Active Fleet: Central Operations Depot')" style="max-width: 260px;">
+      <div class="venue-inner-left">
+        <span>🚜</span>
+        <span class="truncate">Central Fleet Hub, NY</span>
+      </div>
+      <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+    </div>
+
+    <button onclick="setFilter('urgent')" class="circle-btn-action" title="Critical alerts ({{ urgent_count }})" style="background: rgba(0,0,0,0.08); color: #111; width: 38px; height: 38px;">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+      {% if urgent_count > 0 %}
+      <span class="badge-dot-alert"></span>
+      {% endif %}
+    </button>
+  </div>
+</div>
+
+<!-- ==============================================================================
+     TOP ALERT CARD (Exact "STABILIZING LABOR COST" style)
+     ============================================================================== -->
+{% if urgent_count > 0 %}
+<div class="alert-labor-card mb-6">
+  <div class="warning-icon-circ">!</div>
+  <div class="alert-labor-info">
+    <h3 class="alert-labor-title">CRITICAL POLICY EXPIRATIONS DETECTED</h3>
+    <p class="alert-labor-desc">
+      <strong>{{ urgent_count }} policy</strong> requires immediate renewal to avoid legal penalties and coverage lapse.
+      {% if records %}Next policy expiration in <span class="highlight-countdown font-mono">{{ records[0].days_left }} days</span>.{% endif %}
+    </p>
+  </div>
+  <button class="top-right-arrow-btn" onclick="setFilter('urgent')" title="View Critical Policies">↗</button>
+</div>
+{% endif %}
+
+<!-- ==============================================================================
+     FEATURED CARDS: RADIANT CORAL & PERIWINKLE BLUE (Revenue / Capacity style)
+     ============================================================================== -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
+  <!-- Card 1: Sunset Coral Card (Gross Revenue & Fleet Stats) -->
+  <div class="revenue-coral-card flex flex-col justify-between">
+    <div>
+      <div class="rev-header-label-row">
+        <span class="rev-section-label">ACTIVE FLEET COVERAGE</span>
+        <span class="growth-badge-dark">{{ active_count }} Protected</span>
+      </div>
+      <div class="rev-big-num">{{ total_records }} VEHICLES</div>
+
+      <div class="rev-header-label-row mt-2">
+        <span class="rev-section-label">COMPLIANCE RISK LEVEL</span>
+        {% if urgent_count > 0 %}
+        <span class="growth-badge-dark" style="background: #111; color: #ff6b57;">ACTION REQUIRED</span>
+        {% else %}
+        <span class="growth-badge-dark" style="background: #111; color: #86efac;">ALL COMPLIANT</span>
+        {% endif %}
+      </div>
+      <div class="rev-secondary-row">
+        <span class="rev-mid-num">{{ urgent_count }} Critical</span>
+        <span class="rev-subtext">· {{ soon_count }} due this month · {{ expired_count }} lapsed</span>
+      </div>
+    </div>
+
+    <!-- Mini status distribution bar -->
+    <div class="mt-6 pt-4 border-t border-white/20">
+      <div class="flex items-center justify-between text-[11px] font-bold text-white/90 mb-2">
+        <span>Fleet Expiration Breakdown</span>
+        <span>Today: {{ today }}</span>
+      </div>
+      <div class="flex h-3 rounded-full overflow-hidden bg-black/20 p-0.5 gap-1">
+        {% if total_records > 0 %}
+          <div style="width: {{ (active_count / total_records * 100)|round }}%;" class="bg-emerald-300 rounded-full" title="Protected: {{ active_count }}"></div>
+          <div style="width: {{ (soon_count / total_records * 100)|round }}%;" class="bg-amber-300 rounded-full" title="Upcoming: {{ soon_count }}"></div>
+          <div style="width: {{ (urgent_count / total_records * 100)|round }}%;" class="bg-white rounded-full" title="Critical: {{ urgent_count }}"></div>
+          <div style="width: {{ (expired_count / total_records * 100)|round }}%;" class="bg-black/50 rounded-full" title="Expired: {{ expired_count }}"></div>
+        {% else %}
+          <div style="width: 100%;" class="bg-white/40 rounded-full"></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 2: Periwinkle Blue Card (Venue Capacity / Compliance Timeline) -->
+  <div class="venue-capacity-card flex flex-col justify-between">
+    <div>
+      <div class="capacity-top-row">
+        <h2 class="capacity-title">FLEET COMPLIANCE STATUS</h2>
+        <div class="capacity-filter-pill cursor-pointer" onclick="showToast('Timeline: Real-time active database')">
+          <span>real-time</span>
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </div>
+
+      <!-- Quick Filter Metric Bubbles -->
+      <div class="weekdays-bubbles-row">
+        <div class="weekday-item active" onclick="setFilter('all'); updateActiveBubble(this);">
+          <span class="day-label">All</span>
+          <div class="day-bubble">{{ total_records }}</div>
+        </div>
+        <div class="weekday-item" onclick="setFilter('urgent'); updateActiveBubble(this);">
+          <span class="day-label" style="color: #ffb4a8;">Critical</span>
+          <div class="day-bubble" style="border-color: #ff8b77;">{{ urgent_count }}</div>
+        </div>
+        <div class="weekday-item" onclick="setFilter('soon'); updateActiveBubble(this);">
+          <span class="day-label" style="color: #ffe699;">Soon</span>
+          <div class="day-bubble" style="border-color: #ffd15c;">{{ soon_count }}</div>
+        </div>
+        <div class="weekday-item" onclick="setFilter('ok'); updateActiveBubble(this);">
+          <span class="day-label" style="color: #bbf7d0;">Protected</span>
+          <div class="day-bubble" style="border-color: #86efac;">{{ active_count }}</div>
+        </div>
+        <div class="weekday-item" onclick="setFilter('expired'); updateActiveBubble(this);">
+          <span class="day-label">Expired</span>
+          <div class="day-bubble">{{ expired_count }}</div>
+        </div>
+      </div>
+
+      <!-- Area Chart SVG -->
+      <div class="capacity-chart-container">
+        <svg class="capacity-svg" viewBox="0 0 320 85" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="fleetAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#ff573d" stop-opacity="0.85" />
+              <stop offset="100%" stop-color="#ff573d" stop-opacity="0.1" />
+            </linearGradient>
+          </defs>
+          <path d="M 0,70 L 45,55 L 90,30 L 150,45 L 210,15 L 270,35 L 320,65 L 320,85 L 0,85 Z" fill="url(#fleetAreaGradient)" />
+          <path d="M 0,70 L 45,55 L 90,30 L 150,45 L 210,15 L 270,35 L 320,65" fill="none" stroke="#ff573d" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="210" cy="15" r="4.5" fill="#ffffff" stroke="#ff573d" stroke-width="2.5" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Legend Pills -->
+    <div class="capacity-legend-row">
+      <div class="legend-pill cursor-pointer" onclick="setFilter('urgent')"><span class="dot-coral"></span> Critical (&le;7d)</div>
+      <div class="legend-pill cursor-pointer" onclick="setFilter('soon')"><span class="dot-blue"></span> Upcoming (&le;30d)</div>
+      <div class="legend-pill cursor-pointer" onclick="setFilter('ok')"><span class="dot-periwinkle"></span> Protected (&gt;30d)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==============================================================================
+     SEARCH & FILTER TOOLBAR (Exact "REPORTS" search bar style)
+     ============================================================================== -->
+<div class="bg-[#19191d] rounded-3xl p-4 sm:p-5 border border-white/10 shadow-xl mb-6">
+  <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+    <!-- Live Search Pill Input -->
+    <div class="relative flex-1">
+      <div class="reports-search-pill" style="padding: 10px 18px;">
+        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input
+          type="search"
+          id="search-input"
+          class="reports-search-input text-sm"
+          placeholder="Filter by vehicle model, registration plate, owner name, policy..."
+          oninput="applyFilters()"
+          autocomplete="off"
+        />
+        <kbd class="hidden sm:inline-block font-mono text-[11px] bg-white/10 text-slate-300 px-2 py-0.5 rounded">/</kbd>
+      </div>
+    </div>
+
+    <!-- Filter Pills & View Switcher -->
+    <div class="flex flex-wrap items-center justify-between lg:justify-end gap-2">
+      <!-- Filter Pills -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0" style="scrollbar-width: none;">
+        <button onclick="setFilter('all')" data-filter="all" class="screen-pill active">All ({{ total_records }})</button>
+        <button onclick="setFilter('urgent')" data-filter="urgent" class="screen-pill" style="color: var(--color-coral);">Critical ({{ urgent_count }})</button>
+        <button onclick="setFilter('soon')" data-filter="soon" class="screen-pill" style="color: var(--color-yellow);">Upcoming ({{ soon_count }})</button>
+        <button onclick="setFilter('ok')" data-filter="ok" class="screen-pill" style="color: #86efac;">Protected ({{ active_count }})</button>
+        <button onclick="setFilter('expired')" data-filter="expired" class="screen-pill">Expired ({{ expired_count }})</button>
+      </div>
+
+      <!-- View Switcher (Grid vs Table) -->
+      <div class="flex items-center gap-1 bg-[#121215] p-1 rounded-full border border-white/10">
+        <button onclick="setView('grid')" id="view-grid-btn" class="p-1.5 px-3 rounded-full text-xs font-bold bg-white text-black transition" title="Card grid view">
+          ⊞ Cards
+        </button>
+        <button onclick="setView('table')" id="view-table-btn" class="p-1.5 px-3 rounded-full text-xs font-bold text-slate-400 hover:text-white transition" title="Table view">
+          ≡ Table
+        </button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- GRID: responsive -->
-<div class="grid gap-4 grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+<!-- Counter -->
+<div class="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-400 mb-4 px-2">
+  <span id="filtered-count">{{ records|length }} vehicle records shown</span>
+  <span class="hidden sm:inline">1-Click WhatsApp reminder enabled</span>
+</div>
+
+<!-- ==============================================================================
+     VIEW MODE A: CARD GRID (Neo-Editorial Neo-Brutalist Cards)
+     ============================================================================== -->
+<div id="grid-view" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
   {% for item in records %}
     {% set r = item.record %}
     {% set status = item.status %}
     {% set days = item.days_left %}
 
-    <!-- Card: use flex-col so badge stays fixed and actions are at bottom -->
-    <article class="rounded-card card-soft p-4 relative overflow-hidden flex flex-col justify-between">
-      <!-- Status Badge (stable top-right) -->
-      <div class="absolute top-3 right-3 z-10">
-        {% if status == "Expired" %}
-          <span class="status-chip text-red-300 bg-red-800/10 border-red-500/20">Expired · {{ days|abs }}d</span>
-        {% elif status == "Urgent" %}
-          <span class="status-chip text-orange-100 bg-orange-800/10 border-orange-400/20">Urgent · {{ days }}d</span>
-        {% elif status == "Soon" %}
-          <span class="status-chip text-yellow-100 bg-yellow-800/10 border-yellow-400/20">Soon · {{ days }}d</span>
-        {% else %}
-          <span class="status-chip text-emerald-100 bg-emerald-800/10 border-emerald-400/20">OK · {{ days }}d</span>
-        {% endif %}
-      </div>
+    <div
+      class="report-item-card fleet-card"
+      data-status="{{ status|lower }}"
+      data-search="{{ r.vehicle_model|lower }} {{ r.register_number|lower }} {{ r.owner_name|lower }} {{ r.policy_number|lower }} {{ (r.insurance_company or '')|lower }}"
+      style="padding: 20px; border-radius: 26px; display: flex; flex-direction: column; justify-content: space-between;"
+    >
+      <div>
+        <!-- Top Row: Icon Badge, Model & Expiry Status -->
+        <div class="flex items-start justify-between gap-3 mb-3">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-11 h-11 rounded-2xl flex items-center justify-center font-display font-black text-sm flex-shrink-0 shadow-md"
+              style="
+                {% if status == 'Urgent' %}
+                  background: var(--color-coral); color: #ffffff;
+                {% elif status == 'Soon' %}
+                  background: var(--color-yellow); color: #111317;
+                {% elif status == 'OK' %}
+                  background: #10b981; color: #ffffff;
+                {% else %}
+                  background: #475569; color: #ffffff;
+                {% endif %}
+              "
+            >
+              {{ r.vehicle_model[:2] | upper }}
+            </div>
 
-      <!-- Top content -->
-      <div class="flex gap-4">
-        <!-- initials badge -->
-        <div class="flex items-start">
-          <div class="initials mt-1">{{ r.vehicle_model[:1] | upper }}</div>
+            <div class="min-w-0">
+              <a href="/records/{{ r.id }}" class="report-item-title block truncate hover:text-[#ff573d] transition text-base">
+                {{ r.vehicle_model }}
+              </a>
+              <div class="flex items-center gap-1.5 mt-0.5">
+                <span class="plate-badge text-xs">{{ r.register_number }}</span>
+                <button onclick="copyToClipboard('{{ r.register_number }}')" class="text-xs text-slate-400 hover:text-white" title="Copy plate">📋</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status Chip -->
+          <div class="flex-shrink-0">
+            {% if status == 'Urgent' %}
+              <span class="fleet-stat-badge badge-urgent"><span class="w-1.5 h-1.5 rounded-full bg-[#ff573d] animate-ping"></span>Critical ({{ days }}d)</span>
+            {% elif status == 'Soon' %}
+              <span class="fleet-stat-badge badge-soon">Due in {{ days }}d</span>
+            {% elif status == 'OK' %}
+              <span class="fleet-stat-badge badge-ok">Active ({{ days }}d)</span>
+            {% else %}
+              <span class="fleet-stat-badge" style="background: rgba(255,255,255,0.1); color: #94a3b8;">Lapsed {{ days|abs }}d</span>
+            {% endif %}
+          </div>
         </div>
 
-        <div class="flex-1 min-w-0">
-          <a href="/records/{{ r.id }}" class="text-md font-semibold block truncate">{{ r.vehicle_model }}</a>
-          <p class="text-xs muted mt-1 truncate">{{ r.register_number }}</p>
-
-          <p class="text-sm text-slate-200 mt-3 truncate">{{ r.insurance_company or '' }}</p>
-
-          <div class="mt-3 text-sm space-y-1">
-            <div class="flex items-center gap-2 muted text-xs">
-              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 12h14M12 5v14"/></svg>
-              <span class="text-gray-200 truncate">{{ r.owner_name }}</span>
-            </div>
-
-            <div class="flex items-center gap-2 muted text-xs">
-              <svg class="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 2v2M18 2v2M3 10h18M5 22h14"/></svg>
-              <span class="text-gray-200">Valid till: {{ r.validity_date }}</span>
-            </div>
-
-            <div class="text-xs">
-              <a href="/records/{{ r.id }}" class="text-emerald-300 text-xs truncate">Policy: {{ r.policy_number }}</a>
-            </div>
+        <!-- Middle Info: Insurer, Owner, Validity -->
+        <div class="space-y-1.5 py-3 border-y border-white/5 my-2 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400">Insurer:</span>
+            <span class="font-bold text-white truncate max-w-[180px]">{{ r.insurance_company or 'Standard Provider' }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400">Owner:</span>
+            <span class="font-bold text-slate-200 truncate max-w-[180px]">{{ r.owner_name }}</span>
+          </div>
+          <div class="flex items-center justify-between font-mono">
+            <span class="text-slate-400">Valid Till:</span>
+            <span class="text-[#f6c445] font-bold">{{ r.validity_date }}</span>
           </div>
         </div>
       </div>
 
-      <!-- Footer actions (moved to bottom so they do not affect badge alignment) -->
-      <div class="mt-4 flex items-center justify-between">
-        <div class="text-xs muted">ID: {{ r.id }}</div>
-        <div class="flex gap-2 items-center">
-          <a href="/records/{{ r.id }}/edit" class="px-3 py-1 rounded-md text-xs border border-white/6">Edit</a>
-          <form method="post" action="/records/{{ r.id }}/delete" onsubmit="return confirm('Delete this record?');">
-            <button type="submit" class="px-3 py-1 rounded-md text-xs border border-red-600 text-red-300">Delete</button>
-          </form>
-        </div>
+      <!-- Bottom Actions Row -->
+      <div class="flex items-center justify-between gap-2 pt-2 mt-2">
+        <a href="{{ item.wa_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp text-xs py-2 px-3 flex-1 justify-center" title="Send WhatsApp renewal reminder">
+          <span>💬</span>
+          <span>WhatsApp</span>
+        </a>
+
+        <a href="/records/{{ r.id }}" class="btn btn-ghost text-xs py-2 px-3" title="View Specifications">
+          <span>Details</span>
+          <span>↗</span>
+        </a>
+
+        <a href="/records/{{ r.id }}/edit" class="circle-btn-action" style="width: 34px; height: 34px; background: rgba(255,255,255,0.08);" title="Edit Policy">
+          ✏️
+        </a>
       </div>
-    </article>
+    </div>
   {% endfor %}
 </div>
+
+<!-- ==============================================================================
+     VIEW MODE B: SPREADSHEET TABLE
+     ============================================================================== -->
+<div id="table-view" class="hidden saas-card overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-xs">
+      <thead class="bg-[#121215] text-slate-400 font-display uppercase tracking-wider border-b border-white/10">
+        <tr>
+          <th class="py-3 px-4">Vehicle Model</th>
+          <th class="py-3 px-4">Registration</th>
+          <th class="py-3 px-4">Owner</th>
+          <th class="py-3 px-4">Insurer</th>
+          <th class="py-3 px-4">Policy No</th>
+          <th class="py-3 px-4">Expiry</th>
+          <th class="py-3 px-4">Status</th>
+          <th class="py-3 px-4 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-white/5" id="table-tbody">
+        {% for item in records %}
+        {% set r = item.record %}
+        {% set status = item.status %}
+        {% set days = item.days_left %}
+        <tr class="fleet-row hover:bg-white/5 transition" data-status="{{ status|lower }}" data-search="{{ r.vehicle_model|lower }} {{ r.register_number|lower }} {{ r.owner_name|lower }} {{ r.policy_number|lower }}">
+          <td class="py-3.5 px-4 font-bold text-white">
+            <a href="/records/{{ r.id }}" class="hover:text-[#ff573d] transition">{{ r.vehicle_model }}</a>
+          </td>
+          <td class="py-3.5 px-4 font-mono font-bold text-[#f6c445]">{{ r.register_number }}</td>
+          <td class="py-3.5 px-4 text-slate-300">{{ r.owner_name }}</td>
+          <td class="py-3.5 px-4 text-slate-400">{{ r.insurance_company or '—' }}</td>
+          <td class="py-3.5 px-4 font-mono text-slate-300">{{ r.policy_number }}</td>
+          <td class="py-3.5 px-4 font-mono">{{ r.validity_date }}</td>
+          <td class="py-3.5 px-4">
+            {% if status == 'Urgent' %}
+              <span class="fleet-stat-badge badge-urgent">Critical ({{ days }}d)</span>
+            {% elif status == 'Soon' %}
+              <span class="fleet-stat-badge badge-soon">Due in {{ days }}d</span>
+            {% elif status == 'OK' %}
+              <span class="fleet-stat-badge badge-ok">Active ({{ days }}d)</span>
+            {% else %}
+              <span class="fleet-stat-badge" style="background: rgba(255,255,255,0.1); color: #94a3b8;">Expired</span>
+            {% endif %}
+          </td>
+          <td class="py-3.5 px-4 text-right">
+            <div class="flex items-center justify-end gap-1.5">
+              <a href="{{ item.wa_url }}" target="_blank" class="p-1.5 rounded-lg bg-[#128c7e] text-white hover:opacity-90" title="WhatsApp reminder">💬</a>
+              <a href="/records/{{ r.id }}" class="p-1.5 rounded-lg bg-white/10 text-white hover:bg-white/20" title="Details">↗</a>
+              <a href="/records/{{ r.id }}/edit" class="p-1.5 rounded-lg bg-white/10 text-white hover:bg-white/20" title="Edit">✏️</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Floating Yellow FAB Button for Add Policy -->
+<a href="/records/new" class="floating-fab-btn" title="Register New Policy" style="position: fixed; bottom: 28px; right: 28px; text-decoration: none;">
+  +
+</a>
+
+<!-- ==============================================================================
+     JAVASCRIPT FILTERING & INTERACTIONS
+     ============================================================================== -->
+<script>
+  let currentFilter = 'all';
+
+  function setFilter(status) {
+    currentFilter = status;
+    document.querySelectorAll('[data-filter]').forEach(b => {
+      b.classList.toggle('active', b.getAttribute('data-filter') === status);
+    });
+    applyFilters();
+  }
+
+  function applyFilters() {
+    const searchInput = document.getElementById('search-input');
+    const q = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+    const cards = document.querySelectorAll('.fleet-card');
+    const rows = document.querySelectorAll('.fleet-row');
+
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+      const cardStatus = card.getAttribute('data-status');
+      const cardSearch = card.getAttribute('data-search') || '';
+
+      const matchesStatus = (currentFilter === 'all') || (cardStatus === currentFilter);
+      const matchesSearch = !q || cardSearch.includes(q);
+
+      if (matchesStatus && matchesSearch) {
+        card.style.display = 'flex';
+        visibleCount++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    rows.forEach(row => {
+      const rowStatus = row.getAttribute('data-status');
+      const rowSearch = row.getAttribute('data-search') || '';
+
+      const matchesStatus = (currentFilter === 'all') || (rowStatus === currentFilter);
+      const matchesSearch = !q || rowSearch.includes(q);
+
+      row.style.display = (matchesStatus && matchesSearch) ? '' : 'none';
+    });
+
+    const counter = document.getElementById('filtered-count');
+    if (counter) {
+      counter.textContent = `${visibleCount} vehicle records found`;
+    }
+  }
+
+  function setView(mode) {
+    const gridView = document.getElementById('grid-view');
+    const tableView = document.getElementById('table-view');
+    const gridBtn = document.getElementById('view-grid-btn');
+    const tableBtn = document.getElementById('view-table-btn');
+
+    if (mode === 'grid') {
+      gridView.classList.remove('hidden');
+      tableView.classList.add('hidden');
+      gridBtn.className = 'p-1.5 px-3 rounded-full text-xs font-bold bg-white text-black transition';
+      tableBtn.className = 'p-1.5 px-3 rounded-full text-xs font-bold text-slate-400 hover:text-white transition';
+    } else {
+      gridView.classList.add('hidden');
+      tableView.classList.remove('hidden');
+      gridBtn.className = 'p-1.5 px-3 rounded-full text-xs font-bold text-slate-400 hover:text-white transition';
+      tableBtn.className = 'p-1.5 px-3 rounded-full text-xs font-bold bg-white text-black transition';
+    }
+  }
+
+  function updateActiveBubble(el) {
+    document.querySelectorAll('.weekdays-bubbles-row .weekday-item').forEach(item => item.classList.remove('active'));
+    el.classList.add('active');
+  }
+</script>
 
 {% endblock %}

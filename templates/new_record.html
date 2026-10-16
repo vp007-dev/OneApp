@@ -1,57 +1,214 @@
 {% extends "base.html" %}
+{% set back = "/" %}
+{% block title %}Add New Policy — TractorCare SaaS{% endblock %}
 {% block content %}
 
-<h2 class="text-xl font-semibold mb-4">Add Insurance Record</h2>
+<div class="max-w-2xl mx-auto">
+  <div class="saas-card p-6 sm:p-8 anim-fade-up">
+    <!-- Header -->
+    <div class="flex items-center justify-between pb-5 mb-6 border-b border-slate-800/80">
+      <div>
+        <h1 class="page-title">Register Vehicle Policy</h1>
+        <p class="page-subtitle mt-0.5">Enter tractor specifications and insurance coverage dates.</p>
+      </div>
+      <a href="/" class="btn btn-ghost btn-sm">Cancel</a>
+    </div>
 
-<form method="post" class="space-y-4" action="/records/new">
+    <form method="post" action="/records/new" class="space-y-5">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
 
-  <div class="space-y-1">
-    <label class="text-sm text-gray-300">Register Number</label>
-    <input name="register_number" required placeholder="UP 80 XX 1234"
-      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Vehicle Model -->
+        <div class="field">
+          <label class="field-label" for="vehicle_model">
+            <span>Vehicle Model</span>
+            <span class="req">*</span>
+          </label>
+          <input
+            type="text"
+            id="vehicle_model"
+            name="vehicle_model"
+            required
+            list="tractor-models"
+            placeholder="e.g. Mahindra 575 DI"
+          />
+          <datalist id="tractor-models">
+            <option value="Mahindra 575 DI">
+            <option value="Mahindra 475 DI">
+            <option value="Swaraj 744 FE">
+            <option value="Swaraj 855 FE">
+            <option value="John Deere 5310">
+            <option value="John Deere 5050 D">
+            <option value="Sonalika DI 745">
+            <option value="Massey Ferguson 241 DI">
+            <option value="New Holland 3630 TX">
+            <option value="Eicher 380">
+            <option value="Farmtrac 60">
+            <option value="Powertrac Euro 50">
+          </datalist>
+        </div>
+
+        <!-- Registration Number -->
+        <div class="field">
+          <label class="field-label" for="register_number">
+            <span>Registration Plate</span>
+            <span class="req">*</span>
+          </label>
+          <input
+            type="text"
+            id="register_number"
+            name="register_number"
+            required
+            placeholder="e.g. UP 80 XX 1234"
+            class="font-mono upper"
+            oninput="this.value = this.value.toUpperCase()"
+          />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Owner Name -->
+        <div class="field">
+          <label class="field-label" for="owner_name">
+            <span>Owner Full Name</span>
+            <span class="req">*</span>
+          </label>
+          <input
+            type="text"
+            id="owner_name"
+            name="owner_name"
+            required
+            placeholder="e.g. Ramesh Kumar"
+          />
+        </div>
+
+        <!-- Owner Phone -->
+        <div class="field">
+          <label class="field-label" for="owner_phone">
+            <span>Owner Phone</span>
+            <span class="text-[11px] text-slate-400 font-normal">WhatsApp reminders</span>
+          </label>
+          <input
+            type="text"
+            id="owner_phone"
+            name="owner_phone"
+            placeholder="e.g. +91 9876543210"
+            class="font-mono"
+          />
+        </div>
+      </div>
+
+      <!-- Address -->
+      <div class="field">
+        <label class="field-label" for="address">
+          <span>Owner Address</span>
+        </label>
+        <textarea
+          id="address"
+          name="address"
+          rows="2"
+          placeholder="Village, Tehsil, District, State"
+        ></textarea>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Policy Number -->
+        <div class="field">
+          <label class="field-label" for="policy_number">
+            <span>Policy Number</span>
+            <span class="req">*</span>
+          </label>
+          <input
+            type="text"
+            id="policy_number"
+            name="policy_number"
+            required
+            placeholder="e.g. POL-88992011"
+            class="font-mono upper"
+          />
+        </div>
+
+        <!-- Expiration Date -->
+        <div class="field">
+          <div class="flex items-center justify-between">
+            <label class="field-label m-0" for="validity_date">
+              <span>Validity Expiry</span>
+              <span class="req">*</span>
+            </label>
+            <button type="button" onclick="setOneYear()" class="text-[11px] font-bold text-emerald-400 hover:underline">
+              +1 Year Shortcut
+            </button>
+          </div>
+          <input
+            type="date"
+            id="validity_date"
+            name="validity_date"
+            required
+            class="font-mono"
+          />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Insurance Company -->
+        <div class="field">
+          <label class="field-label" for="insurance_company">
+            <span>Insurance Provider</span>
+          </label>
+          <input
+            type="text"
+            id="insurance_company"
+            name="insurance_company"
+            list="insurance-companies"
+            placeholder="e.g. ICICI Lombard"
+          />
+          <datalist id="insurance-companies">
+            <option value="ICICI Lombard">
+            <option value="Bajaj Allianz">
+            <option value="HDFC Ergo">
+            <option value="Reliance General">
+            <option value="Tata AIG">
+            <option value="New India Assurance">
+            <option value="Oriental Insurance">
+            <option value="National Insurance">
+            <option value="United India Insurance">
+            <option value="IFFCO Tokio">
+            <option value="SBI General">
+            <option value="Digit Insurance">
+          </datalist>
+        </div>
+
+        <!-- Notes -->
+        <div class="field">
+          <label class="field-label" for="notes">
+            <span>Coverage Notes</span>
+          </label>
+          <input
+            type="text"
+            id="notes"
+            name="notes"
+            placeholder="e.g. Comprehensive, Nil Dep, Hypothecated"
+          />
+        </div>
+      </div>
+
+      <!-- Action Footer -->
+      <div class="pt-4 flex items-center justify-end gap-3 border-t border-slate-800/80">
+        <a href="/" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn btn-primary">
+          Save Policy Record
+        </button>
+      </div>
+    </form>
   </div>
-
-  <div class="space-y-1">
-    <label class="text-sm text-gray-300">Vehicle Model</label>
-    <input name="vehicle_model" required placeholder="Mahindra 575 DI"
-      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
-  </div>
-
-  <div class="space-y-1">
-    <label class="text-sm text-gray-300">Owner Name</label>
-    <input name="owner_name" required
-      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
-  </div>
-
-  <div class="space-y-1">
-    <label class="text-sm text-gray-300">Address</label>
-    <textarea name="address" rows="2" required
-      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm"></textarea>
-  </div>
-
-  <div class="space-y-1">
-    <label class="text-sm text-gray-300">Policy Number</label>
-    <input name="policy_number" required
-      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
-  </div>
-
-  <div class="space-y-1">
-    <label class="text-sm text-gray-300">Validity Date</label>
-    <input type="date" name="validity_date" required
-      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
-  </div>
-
-  <div class="space-y-1">
-    <label class="text-sm text-gray-300">Insurance Company</label>
-    <input name="insurance_company" required
-      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
-  </div>
-  <div>
-  <label class="text-xs muted">Android Device Token</label>
-  <input name="device_token" class="input" placeholder="Paste device token here">
 </div>
 
-  <button type="submit" class="w-full py-3 bg-emerald-500 rounded-xl text-white font-semibold">Save</button>
-</form>
+<script>
+  function setOneYear() {
+    const today = new Date();
+    today.setFullYear(today.getFullYear() + 1);
+    document.getElementById('validity_date').value = today.toISOString().split('T')[0];
+  }
+</script>
 
 {% endblock %}

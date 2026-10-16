@@ -1,60 +1,174 @@
 {% extends "base.html" %}
-{% set back = "/" %}
+{% set back = "/records/" ~ record.id %}
+{% block title %}Edit {{ record.vehicle_model }} — TractorCare SaaS{% endblock %}
 {% block content %}
 
-<h2 class="text-xl font-semibold mb-4">Edit Record</h2>
+<div class="max-w-2xl mx-auto">
+  <div class="saas-card p-6 sm:p-8 anim-fade-up">
+    <!-- Header -->
+    <div class="flex items-center justify-between pb-5 mb-6 border-b border-slate-800/80">
+      <div>
+        <h1 class="page-title">Edit Policy Record</h1>
+        <p class="page-subtitle mt-0.5">Updating specifications for <span class="plate-badge text-xs">{{ record.register_number }}</span></p>
+      </div>
+      <a href="/records/{{ record.id }}" class="btn btn-ghost btn-sm">Cancel</a>
+    </div>
 
-<form method="post" action="/records/{{ record.id }}/edit" class="space-y-4">
+    <form method="post" action="/records/{{ record.id }}/edit" class="space-y-5">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
 
-  <div class="space-y-1">
-    <label class="text-sm text-gray-300">Register Number</label>
-    <input name="register_number" required value="{{ record.register_number }}"
-      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Vehicle Model -->
+        <div class="field">
+          <label class="field-label" for="vehicle_model">
+            <span>Vehicle Model</span>
+            <span class="req">*</span>
+          </label>
+          <input
+            type="text"
+            id="vehicle_model"
+            name="vehicle_model"
+            required
+            value="{{ record.vehicle_model }}"
+          />
+        </div>
+
+        <!-- Registration Number -->
+        <div class="field">
+          <label class="field-label" for="register_number">
+            <span>Registration Plate</span>
+            <span class="req">*</span>
+          </label>
+          <input
+            type="text"
+            id="register_number"
+            name="register_number"
+            required
+            value="{{ record.register_number }}"
+            class="font-mono upper"
+            oninput="this.value = this.value.toUpperCase()"
+          />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Owner Name -->
+        <div class="field">
+          <label class="field-label" for="owner_name">
+            <span>Owner Full Name</span>
+            <span class="req">*</span>
+          </label>
+          <input
+            type="text"
+            id="owner_name"
+            name="owner_name"
+            required
+            value="{{ record.owner_name }}"
+          />
+        </div>
+
+        <!-- Owner Phone -->
+        <div class="field">
+          <label class="field-label" for="owner_phone">
+            <span>Owner Phone</span>
+            <span class="text-[11px] text-slate-400 font-normal">WhatsApp reminders</span>
+          </label>
+          <input
+            type="text"
+            id="owner_phone"
+            name="owner_phone"
+            value="{{ record.owner_phone or '' }}"
+            placeholder="+91 9876543210"
+            class="font-mono"
+          />
+        </div>
+      </div>
+
+      <!-- Address -->
+      <div class="field">
+        <label class="field-label" for="address">
+          <span>Owner Address</span>
+        </label>
+        <textarea
+          id="address"
+          name="address"
+          rows="2"
+        >{{ record.address }}</textarea>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Policy Number -->
+        <div class="field">
+          <label class="field-label" for="policy_number">
+            <span>Policy Number</span>
+            <span class="req">*</span>
+          </label>
+          <input
+            type="text"
+            id="policy_number"
+            name="policy_number"
+            required
+            value="{{ record.policy_number }}"
+            class="font-mono upper"
+          />
+        </div>
+
+        <!-- Expiration Date -->
+        <div class="field">
+          <label class="field-label" for="validity_date">
+            <span>Validity Expiration</span>
+            <span class="req">*</span>
+          </label>
+          <input
+            type="date"
+            id="validity_date"
+            name="validity_date"
+            required
+            value="{{ record.validity_date }}"
+            class="font-mono"
+          />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Insurance Company -->
+        <div class="field">
+          <label class="field-label" for="insurance_company">
+            <span>Insurance Provider</span>
+          </label>
+          <input
+            type="text"
+            id="insurance_company"
+            name="insurance_company"
+            value="{{ record.insurance_company or '' }}"
+            placeholder="e.g. ICICI Lombard"
+          />
+        </div>
+
+        <!-- Notes -->
+        <div class="field">
+          <label class="field-label" for="notes">
+            <span>Coverage Notes</span>
+          </label>
+          <input
+            type="text"
+            id="notes"
+            name="notes"
+            value="{{ record.notes or '' }}"
+            placeholder="e.g. Comprehensive, Nil Dep"
+          />
+        </div>
+      </div>
+
+      <!-- Action Footer -->
+      <div class="pt-4 flex items-center justify-end gap-3 border-t border-slate-800/80">
+        <a href="/records/{{ record.id }}" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn btn-primary">
+          Save Changes
+        </button>
+      </div>
+    </form>
   </div>
-
-  <div class="space-y-1">
-    <label class="text-sm text-gray-300">Vehicle Model</label>
-    <input name="vehicle_model" required value="{{ record.vehicle_model }}"
-      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
-  </div>
-
-  <div class="space-y-1">
-    <label class="text-sm text-gray-300">Owner Name</label>
-    <input name="owner_name" required value="{{ record.owner_name }}"
-      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
-  </div>
-
-  <div class="space-y-1">
-    <label class="text-sm text-gray-300">Address</label>
-    <textarea name="address" rows="2" required class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm">{{ record.address }}</textarea>
-  </div>
-
-  <div class="space-y-1">
-    <label class="text-sm text-gray-300">Policy Number</label>
-    <input name="policy_number" required value="{{ record.policy_number }}"
-      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
-  </div>
-
-  <div class="space-y-1">
-    <label class="text-sm text-gray-300">Validity Date</label>
-    <input type="date" name="validity_date" required value="{{ record.validity_date }}"
-      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
-  </div>
-
-  <div class="space-y-1">
-    <label class="text-sm text-gray-300">Insurance Company</label>
-    <input name="insurance_company" required value="{{ record.insurance_company }}"
-      class="w-full bg-[#0f1420] border border-white/10 px-3 py-3 rounded-xl text-sm" />
-  </div>
-
-  <div class="flex gap-3">
-    <button type="submit" class="flex-1 py-3 bg-emerald-500 rounded-xl text-white font-semibold">Save</button>
-    <a href="/" class="flex-1 py-3 border rounded-xl text-sm text-gray-200 text-center">Cancel</a>
-  </div>
-  <div>
-  <label class="text-xs muted">Android Device Token</label>
-  <input name="device_token" value="{{ record.device_token }}" class="input">
 </div>
-</form>
 
 {% endblock %}
